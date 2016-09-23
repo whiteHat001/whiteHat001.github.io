@@ -1541,6 +1541,21 @@ pre .javascript .function {
   color: #999;
   text-align: center;
 }
+.archive-list {
+  font-size: 0.9em;
+  padding: 15px 20px;
+}
+.archive-list .archive-list-count {
+  margin-left: 8px;
+  font-size: 0.8em;
+  color: color-meta;
+}
+.archive-list .archive-list-count:before {
+  content: '(';
+}
+.archive-list .archive-list-count:after {
+  content: ')';
+}
 .sidebar-toggle {
   position: fixed;
   right: 50px;
@@ -1664,7 +1679,7 @@ pre .javascript .function {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #c970b0;
+  background: #fff;
 }
 .links-of-blogroll {
   font-size: 13px;
