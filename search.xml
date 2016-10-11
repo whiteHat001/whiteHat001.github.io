@@ -4,6 +4,15 @@
   
     
     <entry>
+      <title><![CDATA[vuplayer stack overflow]]></title>
+      <url>http://yoursite.com/2016/10/11/vuplayer-stack-overflow/</url>
+      <content type="html"><![CDATA[<p>一、漏洞环境<br>vuplayer2.49   win7 32</p>
+<p>由于win7 没有找到绕过aslr的方法，但是dep绕过了。</p>
+<p><a href="https://github.com/whiteHat001/vuplayer/" target="_blank" rel="external">下载地址</a><br>参考资料:<a href="https://www.exploit-db.com/exploits/40172/" target="_blank" rel="external">https://www.exploit-db.com/exploits/40172/</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[cve-2010-3333调试学习笔记]]></title>
       <url>http://yoursite.com/2016/09/23/cve-2010-3333%E8%B0%83%E8%AF%95%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
       <content type="html"><![CDATA[<p>由于第一次分析，难免会有错误，希望能够指出。<br><a href="https://github.com/whiteHat001/cve-2010-3333" target="_blank" rel="external">下载地址</a><br>参考文档:《漏洞战争》</p>
