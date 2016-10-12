@@ -1,157 +1,41 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <meta charset="utf-8">
-  
-  <title>hackyzh&#39;blog</title>
-  <meta name="author" content="hackyzh">
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+extends base
+- var current_title = page.title || tag.name || category.name || site.title
 
-  
-  <meta property="og:site_name" content="hackyzh&#39;blog"/>
+block title
+  if config.subtitle
+    title= config.title + ' | ' + config.subtitle
+  else
+    title= config.title
+block content
 
-  
-    <meta property="og:image" content="undefined"/>
-  
+  for post in page.posts.toArray()
+    .post
+      h2.post-title
+        include _partial/helpers
+        a(href=url_for(post.path))
+          +title(post)
+      .post-meta= post.date.format(config.date_format)
+      if theme.duoshuo
+        a.ds-thread-count(data-thread-key=post.path, href=url_for(post.path) + '#comments')
+      if theme.disqus
+        a.disqus-comment-count(data-disqus-identifier=post.path, href=url_for(post.path) + '#disqus_thread')
+      if post.description
+        .post-content
+          != post.description
+      else if post.excerpt
+        .post-content
+          != post.excerpt
+      else if post.content
+        - var br = post.content.indexOf('\n')
+        if br < 0
+          .post-content
+            != post.content
+        else
+          .post-content
+            != post.content.substring(0, br)
+      p(class='readmore')
+        a(href=url_for(post.path))= __('Readmore')
 
-  <link href="/favicon.png" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="hackyzh&#39;blog" type="application/atom+xml">
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-  
-
-</head>
-
-
-<body>
-  <header id="header" class="inner"><div class="alignleft">
-  <h1><a href="/">hackyzh&#39;blog</a></h1>
-  <h2><a href="/"></a></h2>
-</div>
-<nav id="main-nav" class="alignright">
-  <ul>
-    
-      <li><a href="/">Home</a></li>
-    
-      <li><a href="/archives">Archives</a></li>
-    
-  </ul>
-  <div class="clearfix"></div>
-</nav>
-<div class="clearfix"></div>
-</header>
-  <div id="content" class="inner">
-    <div id="main-col" class="alignleft"><div id="wrapper">
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-10-11T12:59:09.000Z"><a href="/2016/10/11/vuplayer-stack-overflow/">2016-10-11</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/10/11/vuplayer-stack-overflow/">vuplayer stack overflow</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>一、漏洞环境<br>vuplayer2.49   win7 32</p>
-<p>由于win7 没有找到绕过aslr的方法，但是dep绕过了。</p>
-<p><a href="https://github.com/whiteHat001/vuplayer/" target="_blank" rel="external">下载地址</a><br>参考资料:<a href="https://www.exploit-db.com/exploits/40172/" target="_blank" rel="external">https://www.exploit-db.com/exploits/40172/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-09-23T06:19:09.000Z"><a href="/2016/09/23/cve-2010-3333调试学习笔记/">2016-09-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/09/23/cve-2010-3333调试学习笔记/">cve-2010-3333调试学习笔记</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>由于第一次分析，难免会有错误，希望能够指出。<br><a href="https://github.com/whiteHat001/cve-2010-3333" target="_blank" rel="external">下载地址</a><br>参考文档:《漏洞战争》</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-
-<nav id="pagination">
-  
-  
-  <div class="clearfix"></div>
-</nav></div></div>
-    <aside id="sidebar" class="alignright">
-  <div class="search">
-  <form action="//google.com/search" method="get" accept-charset="utf-8">
-    <input type="search" name="q" results="0" placeholder="Suche">
-    <input type="hidden" name="q" value="site:yoursite.com">
-  </form>
-</div>
-
-  
-
-  
-</aside>
-    <div class="clearfix"></div>
-  </div>
-  <footer id="footer" class="inner"><div class="alignleft">
-  
-  &copy; 2016 hackyzh
-  
-</div>
-<div class="clearfix"></div></footer>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<script src="/js/jquery.imagesloaded.min.js"></script>
-<script src="/js/gallery.js"></script>
-
-
-
-
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-  $('.fancybox').fancybox();
-})(jQuery);
-</script>
-
-</body>
-</html>
+  include _partial/paginator
+  if theme.disqus
+    script(id='dsq-count-scr', src='//#{theme.disqus}.disqus.com/count.js', async)
