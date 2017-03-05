@@ -4,6 +4,13 @@
   
     
     <entry>
+      <title><![CDATA[汽车黑客手册(翻译)by hackyzh]]></title>
+      <url>http://yoursite.com/2017/03/05/%E6%B1%BD%E8%BD%A6%E9%BB%91%E5%AE%A2%E6%89%8B%E5%86%8C-%E7%BF%BB%E8%AF%91/</url>
+      <content type="html"><![CDATA[<p>由于markdown不太好排版，所以只好放在word文档里面，翻译这些文章，只是兴趣使然，没有别的意思。由于英文水平有限，麻烦看到请指出谢谢！</p>
+]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[NULL Pointer Dereference]]></title>
       <url>http://yoursite.com/2017/02/19/NULL-Pointer-Dereference/</url>
       <content type="html"><![CDATA[<h1 id="NULL-pointer-dereference-php漏洞挖掘系列四"><a href="#NULL-pointer-dereference-php漏洞挖掘系列四" class="headerlink" title="NULL pointer dereference (php漏洞挖掘系列四)"></a>NULL pointer dereference (php漏洞挖掘系列四)</h1><h2 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h2><p>本次要讲的是空指针漏洞，php官方把空指针漏洞算安全漏洞，有些空指针漏洞会申报cve的，不过我也不太清楚它将哪些空指针漏洞上报cve，好了开始分享本次漏洞吧，这个漏洞案例有些地方我也不是很清楚，那个上报漏洞人有些地方讲解的地方不是很清楚，我自己水平有限，欢迎清楚的朋友指点指点。</p>
