@@ -95,7 +95,7 @@ Unserialize Syntax
 <meta property="og:description" content="在PHP中从反序列化用户输入的数据是危险的，原因如下：众所周知，反序列化的类的方法可以被调用（PHP应用程序中的ROP）。可以在几乎任意的位置设置引用（通常导致释放重引用漏洞）。可以在序列化字符串中定义变量的类型（如果内部类对属性类型做出错误的假设，则可能导致类型混淆）。
 Unserialize Syntax
 在实现fuzzer之前，必须了解PHP序列化的语法。有12个不同的符号，每个符号用于一种">
-<meta property="og:updated_time" content="2017-04-29T02:24:05.000Z">
+<meta property="og:updated_time" content="2017-04-29T02:25:40.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Fuzzing unserialize">
 <meta name="twitter:description" content="在PHP中从反序列化用户输入的数据是危险的，原因如下：众所周知，反序列化的类的方法可以被调用（PHP应用程序中的ROP）。可以在几乎任意的位置设置引用（通常导致释放重引用漏洞）。可以在序列化字符串中定义变量的类型（如果内部类对属性类型做出错误的假设，则可能导致类型混淆）。
@@ -472,8 +472,6 @@ Unserialize Syntax
 <p>当一个值分配给一个属性时，内部函数  zend_std_write_property最终到达。这里，旧数据的zval被复制到一个临时的zval中。这个临时的zval被传递给zval_dtor，实际的内容被破坏。在我们的示例中，zval表示外部数组，并包含指向HashTable的指针。zval_dtor没有做任何refcounter检查，毫无犹豫的释放HashTable。不幸的是，unserialize仍然在这个HashTable上运行，并且一旦wakeup函数返回就会崩溃。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">&quot;/Zend/zend_object_handlers.c&quot;</div><div class="line">[...]</div><div class="line">ZEND_API void zend_std_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC) /* &#123;&#123;&#123; */</div><div class="line">&#123;</div><div class="line">[...]</div><div class="line">    if (PZVAL_IS_REF(*variable_ptr)) &#123;</div><div class="line">        zval garbage = **variable_ptr; /* old value should be destroyed */</div><div class="line"></div><div class="line">        /* To check: can&apos;t *variable_ptr be some system variable like error_zval here? */</div><div class="line">        Z_TYPE_PP(variable_ptr) = Z_TYPE_P(value);</div><div class="line">        (*variable_ptr)-&gt;value = value-&gt;value;</div><div class="line">        if (Z_REFCOUNT_P(value) &gt; 0) &#123;</div><div class="line">            zval_copy_ctor(*variable_ptr);</div><div class="line">        &#125; else &#123;</div><div class="line">            efree(value);</div><div class="line">        &#125;</div><div class="line">        zval_dtor(&amp;garbage);</div><div class="line">    &#125;</div><div class="line">[...]</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>这个bug是一个经典的释放重引用漏洞，但遗憾的是没有zval，而只是一个HashTable被释放。然而，这仍然是早期php4版本中存在的可以利用的bug。但是，这个bug很难被利用，因为我无法通过它来泄露任意内存。因此，难以伪造可用于进一步开发目的的必要的hashtable。</p>
-<p><strong>Closing Words</strong></p>
-<p>PHP的unserializer自成立以来就受到不安全感的影响，直到死亡为止。在用户输入中使用unserialize应该被认为是每个五星级报告中的关键 - 即使PHP版本是最新的。<br>请记住，用户输入的反序列化是每个语言的一个坏主意，如果没有做的话。在Python（pickles）和Java（readObject）中，事情更糟，因为解串器允许只使用语言默认值来执行代码。你应该依赖不太复杂的序列化格式，如json。<br>这个项目的结果是非常有趣的，因为我们预计会发现漏洞本身不排序，但最终在完全不同的核心组件中找到2个错误。它还表明，一个高度专业化的模糊器可以非常强大。<br>目前我无意释放这个Fuzzer。不过，如果您有任何疑问，可以给我发表评论，或者通过Twitter @haxonaut与我联系进一步讨论。</p>
 
       
     </div>
