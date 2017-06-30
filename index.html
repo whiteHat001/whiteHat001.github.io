@@ -342,8 +342,9 @@
       
         
           
-          任意地址写主要是覆盖HalDispatchTable + 4位置的值为shellcode的值，where是指向HalDispatchTable + 4的指针，what是指向shellcode的指针。下图比较清楚
-12345678910111213141516171819202122232425262
+          任意地址写利用原理主要是覆盖HalDispatchTable + 4位置的值为shellcode的值，where是指向HalDispatchTable + 4的指针，what是指向shellcode的指针。下图比较清楚
+下面是漏洞代码，原理挺简单的，看注释就能看懂。
+1234567891011121
           ...
 
           <div class="post-more-link text-center">
