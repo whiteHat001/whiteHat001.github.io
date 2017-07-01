@@ -289,6 +289,115 @@
             
               
                 
+                <a class="post-title-link" href="/2017/04/29/Fuzzing-unserialize/" itemprop="url">
+                  Fuzzing unserialize
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-04-29T10:22:23+08:00" content="2017-04-29">
+              2017-04-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/04/29/Fuzzing-unserialize/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/04/29/Fuzzing-unserialize/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+          在PHP中从反序列化用户输入的数据是危险的，原因如下：众所周知，反序列化的类的方法可以被调用（PHP应用程序中的ROP）。可以在几乎任意的位置设置引用（通常导致释放重引用漏洞）。可以在序列化字符串中定义变量的类型（如果内部类对属性类型做出错误的假设，则可能导致类型混淆）。
+Unserialize S
+          ...
+
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2017/04/29/Fuzzing-unserialize/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/04/11/linux下return-to-libc/" itemprop="url">
                   linux下return-to-libc
                 </a>
@@ -703,116 +812,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/30/CVE-2017-7269个人学习分析/" itemprop="url">
-                  CVE-2017-7269个人学习分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2017-03-30T19:55:49+08:00" content="2017-03-30">
-              2017-03-30
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/03/30/CVE-2017-7269个人学习分析/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/30/CVE-2017-7269个人学习分析/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-          0x01    环境Windwos server 2003
-IIS6.0  WEBDAV开启
-0x02 漏洞分析根据网上得知是ScStoragePathFromUrl函数造成的缓冲区溢出。通过一个以“If: &lt;http://”开始的较长header头的PROPFIND请求执行任意代码。这里就简
-          ...
-
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2017/03/30/CVE-2017-7269个人学习分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -858,7 +857,7 @@ IIS6.0  WEBDAV开启
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">21</span>
+              <span class="site-state-item-count">22</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

