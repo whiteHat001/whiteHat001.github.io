@@ -85,19 +85,19 @@
 
 
 
-<meta name="description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
-有很多代码都是借鉴一步一步x64教程中的，就不自己">
+<meta name="description" content="linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己写了，然后发现x64教程中有很多">
 <meta property="og:type" content="article">
 <meta property="og:title" content="64位linux下栈溢出漏洞利用">
 <meta property="og:url" content="http://yoursite.com/2017/10/15/64位linux下栈溢出漏洞利用/index.html">
 <meta property="og:site_name" content="hackyzh'blog">
-<meta property="og:description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
-有很多代码都是借鉴一步一步x64教程中的，就不自己">
-<meta property="og:updated_time" content="2017-10-15T09:13:57.000Z">
+<meta property="og:description" content="linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己写了，然后发现x64教程中有很多">
+<meta property="og:updated_time" content="2017-10-15T09:15:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="64位linux下栈溢出漏洞利用">
-<meta name="twitter:description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
-有很多代码都是借鉴一步一步x64教程中的，就不自己">
+<meta name="twitter:description" content="linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己写了，然后发现x64教程中有很多">
 
 
 
@@ -342,7 +342,7 @@
       
 
       
-        <h1 id="64位linux下栈溢出漏洞利用"><a href="#64位linux下栈溢出漏洞利用" class="headerlink" title="64位linux下栈溢出漏洞利用"></a><strong>64位linux下栈溢出漏洞利用</strong></h1><p>linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。</p>
+        <p>linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。</p>
 <p>有很多代码都是借鉴一步一步x64教程中的，就不自己写了，然后发现x64教程中有很多问题，自己手动调试写了exp，漏洞源码vuln.c：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">![#include &lt;stdio.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line"></div><div class="line">void vulnerable_function() &#123;</div><div class="line">    char buf[128];</div><div class="line">    read(STDIN_FILENO, buf, 512);</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char** argv) &#123;</div><div class="line">    write(STDOUT_FILENO, &quot;pwn it\n&quot;, 7);</div><div class="line">    vulnerable_function();</div><div class="line">&#125;](http://note.youdao.com/favicon.ico)</div></pre></td></tr></table></figure></p>
 <p>编译命令：<br>gcc -fno-stack-protector vuln.c -o vuln</p>
 <p>编译好之后，利用gdb调试vuln。我的gdb配合了peda和pwndbg这两个工具，看起来更加直观清楚。</p>
@@ -606,7 +606,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#64位linux下栈溢出漏洞利用"><span class="nav-number">1.</span> <span class="nav-text">64位linux下栈溢出漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-有libc情况下的利用"><span class="nav-number">1.1.</span> <span class="nav-text">0x01 有libc情况下的利用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-无libc的情况下"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 无libc的情况下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-更加直接暴力的方法"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 更加直接暴力的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x04-结论"><span class="nav-number">1.4.</span> <span class="nav-text">0x04 结论</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-有libc情况下的利用"><span class="nav-number">1.</span> <span class="nav-text">0x01 有libc情况下的利用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-无libc的情况下"><span class="nav-number">2.</span> <span class="nav-text">0x02 无libc的情况下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-更加直接暴力的方法"><span class="nav-number">3.</span> <span class="nav-text">0x03 更加直接暴力的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x04-结论"><span class="nav-number">4.</span> <span class="nav-text">0x04 结论</span></a></li></ol></div>
             
           </div>
         </section>
