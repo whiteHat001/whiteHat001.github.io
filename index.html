@@ -450,8 +450,7 @@
       
         
           
-          最近重新复习了一下堆的相关知识，发现以前理解的不透彻，然后忘的好彻底。然后现在重新捡起来看看，发现捡起来也很费力看着别人的例子，理解了一下，例子就是绕过unsafe unlink的例子。unlink.c如下：
-123456789101112131415161718192021222324252627
+          堆的知识要点：allocted chunk 和free chunk 差不多就是缺少了两个指针prev_size：两个空闲「chunk」不能毗连，而应合并成一个。因此前一个「chunk」和后一个空闲「chunk」都会被分配，此时 prev_size 中保存上一个「chunk」的用户数据。 size：该
           ...
 
           <div class="post-more-link text-center">
